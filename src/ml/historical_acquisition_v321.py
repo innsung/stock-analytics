@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from datetime import datetime, timedelta
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
+import io
 import json
 import os
 import time
@@ -39,6 +40,13 @@ def _requests_timeout(seconds: float):
         yield
     finally:
         requests.sessions.Session.request = original
+
+
+@contextmanager
+def _quiet_provider_output():
+    """Prevent third-party login messages from exposing account IDs in logs."""
+    with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+        yield
 
 
 def _year_chunks(start: str, end: str) -> list[tuple[str, str]]:
@@ -90,7 +98,8 @@ class PykrxProvider:
                 ". 프로젝트 루트의 .env에 KRX_ID와 KRX_PW를 저장하세요. 값은 로그에 출력하지 않습니다."
             )
         try:
-            from pykrx import stock  # type: ignore
+            with _quiet_provider_output():
+                from pykrx import stock  # type: ignore
         except ImportError as exc:
             raise RuntimeError("pykrx import에 실패했습니다.") from exc
         self.stock = stock
@@ -102,7 +111,7 @@ class PykrxProvider:
         start_dt = end_dt - timedelta(days=14)
         probe_start = start_dt.strftime("%Y%m%d")
         try:
-            with _requests_timeout(self.request_timeout):
+            with _quiet_provider_output(), _requests_timeout(self.request_timeout):
                 frame = self.stock.get_market_fundamental(probe_start, end, code, freq="d")
         except Exception as exc:
             return {
@@ -123,21 +132,21 @@ class PykrxProvider:
         }
 
     def fundamentals(self, start: str, end: str, code: str, frequency: str) -> pd.DataFrame:
-        with _requests_timeout(self.request_timeout):
+        with _quiet_provider_output(), _requests_timeout(self.request_timeout):
             return self.stock.get_market_fundamental(start, end, code, freq=frequency)
 
     def market_cap(self, start: str, end: str, code: str, frequency: str) -> pd.DataFrame:
-        with _requests_timeout(self.request_timeout):
+        with _quiet_provider_output(), _requests_timeout(self.request_timeout):
             return self.stock.get_market_cap(start, end, code, freq=frequency)
 
     def ohlcv(self, start: str, end: str, code: str, frequency: str) -> pd.DataFrame:
-        with _requests_timeout(self.request_timeout):
+        with _quiet_provider_output(), _requests_timeout(self.request_timeout):
             return self.stock.get_market_ohlcv(start, end, code, freq=frequency, adjusted=True)
 
     def index_constituents(self, index_code: str, date: str) -> list[str]:
         # pykrx versions differ in argument order; support both without guessing silently.
         fn = self.stock.get_index_portfolio_deposit_file
-        with _requests_timeout(self.request_timeout):
+        with _quiet_provider_output(), _requests_timeout(self.request_timeout):
             try:
                 values = fn(index_code, date)
             except TypeError:

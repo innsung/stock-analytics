@@ -2,7 +2,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from src.ml.historical_acquisition_v321 import acquire_historical_data_v321
+from src.ml.historical_acquisition_v321 import (
+    PykrxProvider,
+    acquire_historical_data_v321,
+)
 
 
 class FakeProvider:
@@ -14,6 +17,22 @@ class FakeProvider:
         return pd.DataFrame({"종가":[10000,11000]}, index=pd.to_datetime(["2026-06-30","2026-07-09"]))
     def index_constituents(self, index_code, date):
         return ["005930", "000660"]
+
+
+def test_provider_preflight_does_not_expose_third_party_login_output(capsys):
+    provider = object.__new__(PykrxProvider)
+    provider.request_timeout = 1
+    provider.installed_version = "test"
+
+    class NoisyStock:
+        @staticmethod
+        def get_market_fundamental(*args, **kwargs):
+            print("secret-login-id")
+            return pd.DataFrame({"PER": [10.0]}, index=["20260709"])
+
+    provider.stock = NoisyStock()
+    assert provider.preflight("005930", "20260709")["ok"] is True
+    assert "secret-login-id" not in capsys.readouterr().out
 
 
 def test_phase4_acquires_strict_valuation_and_observations(tmp_path):
