@@ -169,4 +169,4 @@ def run_portfolio_command(
             common.stocks.to_csv(base.with_name(base.stem + "_common_stocks.csv"), index=False, encoding="utf-8-sig")
             common.industries.to_csv(base.with_name(base.stem + "_industries.csv"), index=False, encoding="utf-8-sig")
             common.portfolio_curve.to_csv(base.with_name(base.stem + "_portfolio.csv"), encoding="utf-8-sig")
-                print(f"공통 파라미터 포트폴리오: 수익 {common.portfolio_return:.2f}%, MDD {common.portfolio_mdd:.2f}%, 샤프 {common.portfolio_sharpe:.2f}, 벤치마크 {common.benchmark_return:.2f}%, 판정 {common.verdict}")
+            print(f"공통 파라미터 포트폴리오: 수익 {common.portfolio_return:.2f}%, MDD {common.portfolio_mdd:.2f}%, 샤프 {common.portfolio_sharpe:.2f}, 벤치마크 {common.benchmark_return:.2f}%, 판정 {common.verdict}")
