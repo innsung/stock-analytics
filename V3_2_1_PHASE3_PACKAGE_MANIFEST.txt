@@ -1,9 +1,0 @@
-V3.2.1 Data Integrity Phase 3
-- No new model / no retuning
-- research_seen_through=20260709
-- Strict four-dataset canonical ingestion
-- Placeholder and post-cutoff rejection
-- Valuation known_at persisted and audited end-to-end
-- FULL PIT requires snapshot_date + known_at + matching source row
-- Existing valuation_snapshots 10-column compatibility preserved
-- 49 tests passing

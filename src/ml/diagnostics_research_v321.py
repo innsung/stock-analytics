@@ -16,7 +16,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from src.ml.diagnostics_v2 import (
+from src.ml.diagnostics_features_v321 import (
     BANK_SAFE_FINANCIAL_FEATURES, FINANCIAL_FEATURES, MARKET_FEATURES,
     PRICE_FEATURES, _rank_features, _split,
 )
@@ -54,7 +54,7 @@ def _read_universe_history(path: str | None) -> tuple[pd.DataFrame, bool, str]:
     frame = pd.read_csv(path, dtype=str).fillna("")
     missing = UNIVERSE_COLUMNS - set(frame.columns)
     if missing:
-        raise ValueError("V3 시점별 유니버스 CSV 누락 열: " + ", ".join(sorted(missing)))
+        raise ValueError("V3.2.1 시점별 유니버스 CSV 누락 열: " + ", ".join(sorted(missing)))
     frame["code"] = frame["code"].str.strip().str.zfill(6)
     date_columns = [
         "effective_from", "effective_to", "selection_known_at",
@@ -136,13 +136,13 @@ def _registered_lockbox_start(conn: sqlite3.Connection, benchmark_code: str,
     requested = requested.replace("-", "") if requested else None
     row = conn.execute(
         """SELECT lockbox_start FROM ml_lockbox_registry
-           WHERE benchmark_code=? AND horizon=? AND diagnostic_version=3""",
+           WHERE benchmark_code=? AND horizon=? AND diagnostic_version=321""",
         (benchmark_code, horizon)).fetchone()
     if row:
         registered = str(row[0])
         if requested and requested != registered:
             raise ValueError(
-                f"V3 봉인시험 시작일은 이미 {registered}로 고정되었습니다. "
+                f"V3.2.1 봉인시험 시작일은 이미 {registered}로 고정되었습니다. "
                 "기존 봉인기간을 이동할 수 없습니다.")
         return registered, True
     if not requested:
@@ -150,7 +150,7 @@ def _registered_lockbox_start(conn: sqlite3.Connection, benchmark_code: str,
     conn.execute(
         """INSERT INTO ml_lockbox_registry(
              benchmark_code,horizon,diagnostic_version,lockbox_start,registered_at)
-           VALUES(?,?,3,?,?)""",
+           VALUES(?,?,321,?,?)""",
         (benchmark_code, horizon, requested, datetime.now(timezone.utc).isoformat()))
     conn.commit()
     return requested, True
@@ -159,25 +159,25 @@ def _registered_lockbox_start(conn: sqlite3.Connection, benchmark_code: str,
 def _research_cutoff_and_lockbox_novelty(
         conn: sqlite3.Connection, benchmark_code: str, horizon: int,
         latest_observed: str, requested_lockbox: str | None) -> tuple[str, bool]:
-    """Freeze what was already visible before a genuinely future V3 lockbox begins."""
+    """Freeze observations visible before a future V3.2.1 lockbox begins."""
     requested = requested_lockbox.replace("-", "") if requested_lockbox else None
     registered = conn.execute(
         """SELECT lockbox_start FROM ml_lockbox_registry
-           WHERE benchmark_code=? AND horizon=? AND diagnostic_version=3""",
+           WHERE benchmark_code=? AND horizon=? AND diagnostic_version=321""",
         (benchmark_code, horizon)).fetchone()
     row = conn.execute(
         """SELECT seen_through FROM ml_research_cutoff_registry
-           WHERE benchmark_code=? AND horizon=? AND diagnostic_version=3""",
+           WHERE benchmark_code=? AND horizon=? AND diagnostic_version=321""",
         (benchmark_code, horizon)).fetchone()
     if row:
         cutoff = str(row[0])
     else:
-        # The first V3 execution necessarily exposes every currently stored labelled date.
+        # The first V3.2.1 execution records every currently visible labelled date.
         cutoff = latest_observed
         conn.execute(
             """INSERT INTO ml_research_cutoff_registry(
                  benchmark_code,horizon,diagnostic_version,seen_through,updated_at)
-               VALUES(?,?,3,?,?)""",
+               VALUES(?,?,321,?,?)""",
             (benchmark_code, horizon, cutoff, datetime.now(timezone.utc).isoformat()))
         conn.commit()
     if registered:
@@ -447,203 +447,3 @@ def _monotonic(portfolio: pd.DataFrame, scope: str) -> bool:
         return False
     values = rows["universe_net_excess_return"]
     return bool(values.loc[.1] >= values.loc[.2] >= values.loc[.3])
-
-
-def run_ml_diagnostics_v3(
-        conn: sqlite3.Connection, horizon: int = 20, benchmark_code: str = "069500",
-        validation_days: int = 126, test_days: int = 126, min_train_days: int = 504,
-        fold_days: int = 126, commission: float = .015, tax: float = .18,
-        slippage: float = .05, output_prefix: str = "ml_v3_h20",
-        lockbox_start: str | None = None, universe_history_csv: str | None = None,
-        rank_scope: str = "market") -> dict:
-    data = load_ml_dataset(conn, horizon, benchmark_code)
-    if data.empty:
-        raise ValueError("V3 진단 데이터가 없습니다. build-feature-store를 먼저 실행하세요.")
-    original_codes = set(data["code"].astype(str).str.zfill(6))
-    data["code"] = data["code"].astype(str).str.zfill(6)
-    history, history_valid, history_status = _read_universe_history(universe_history_csv)
-    data, universe_audit, full_coverage = _apply_universe_history(data, history)
-    universe_verified = bool(history_valid and full_coverage and not data.empty)
-    if data.empty:
-        raise ValueError("시점별 유니버스 적용 후 학습 가능한 행이 없습니다.")
-    if set(data["code"].unique()) - original_codes:
-        raise AssertionError("유니버스 적용 중 원래 없던 종목이 추가되었습니다.")
-    data = _bank_safe(_rank_features(data, rank_scope))
-    research_cutoff, fresh_v3_lockbox = _research_cutoff_and_lockbox_novelty(
-        conn, benchmark_code, horizon, str(data["feature_date"].max()), lockbox_start)
-    existing_v3_lockbox = conn.execute(
-        """SELECT 1 FROM ml_lockbox_registry
-           WHERE benchmark_code=? AND horizon=? AND diagnostic_version=3""",
-        (benchmark_code, horizon)).fetchone()
-    if lockbox_start and not fresh_v3_lockbox and not existing_v3_lockbox:
-        # Do not permanently register an already-seen interval as a new lockbox.
-        registered_lockbox, lockbox_registered = None, False
-    else:
-        registered_lockbox, lockbox_registered = _registered_lockbox_start(
-            conn, benchmark_code, horizon, lockbox_start)
-    dates, validation_start, test_start, train, validation, lockbox = _split(
-        data, validation_days, test_days, registered_lockbox)
-
-    candidates = [
-        Candidate(model, target, features)
-        for model in ("ridge", "elastic_net", "hist_gradient_boosting")
-        for target in ("excess_regression", "cross_sectional_rank", "industry_neutral_rank")
-        for features in FEATURE_SETS
-    ] + [Candidate("factor_composite", "factor_rule", "price_financial_safe")]
-    tournament_rows: list[dict] = []
-    validation_predictions: dict[Candidate, pd.DataFrame] = {}
-    for candidate in candidates:
-        metric, prediction, _ = _evaluate_candidate(
-            candidate, train, validation, horizon, commission, tax, slippage, "validation")
-        tournament_rows.append(metric)
-        validation_predictions[candidate] = prediction
-    tournament = pd.DataFrame(tournament_rows)
-    tournament["selection_score"] = _selection_score(tournament)
-    tournament = tournament.sort_values(
-        ["selection_score", "daily_rank_ic"], ascending=[False, False]).reset_index(drop=True)
-    selected = Candidate(
-        str(tournament.iloc[0]["model_name"]), str(tournament.iloc[0]["target_kind"]),
-        str(tournament.iloc[0]["feature_set"]))
-
-    development = data[(data["feature_date"] < test_start)
-                       & (data["label_available_at"] < test_start)]
-    lock_metric, lock_predictions, _ = _evaluate_candidate(
-        selected, development, lockbox, horizon, commission, tax, slippage, "lockbox_test")
-    tournament = pd.concat([tournament, pd.DataFrame([lock_metric])], ignore_index=True)
-
-    development_dates = dates[dates < validation_start]
-    walk_rows: list[dict] = []
-    walk_predictions: list[pd.DataFrame] = []
-    for offset in range(min_train_days, len(development_dates), fold_days):
-        fold_dates = development_dates[offset:min(offset + fold_days, len(development_dates))]
-        if len(fold_dates) < max(20, fold_days // 3):
-            continue
-        fold_start = fold_dates[0]
-        fold_train = data[(data["feature_date"] < fold_start)
-                          & (data["label_available_at"] < fold_start)]
-        fold_test = data[data["feature_date"].isin(fold_dates)]
-        if fold_train.empty or fold_test.empty:
-            continue
-        metric, prediction, _ = _evaluate_candidate(
-            selected, fold_train, fold_test, horizon, commission, tax, slippage,
-            f"walk_forward_{len(walk_rows) + 1}")
-        metric.update({
-            "fold": len(walk_rows) + 1, "train_start": fold_train["feature_date"].min(),
-            "train_end": fold_train["feature_date"].max(),
-            "test_start": fold_dates[0], "test_end": fold_dates[-1],
-        })
-        walk_rows.append(metric)
-        walk_predictions.append(prediction.assign(fold=len(walk_rows)))
-    walk = pd.DataFrame(walk_rows)
-    walk_prediction_frame = (pd.concat(walk_predictions, ignore_index=True)
-                             if walk_predictions else pd.DataFrame())
-
-    portfolio_frames: list[pd.DataFrame] = []
-    holding_frames: list[pd.DataFrame] = []
-    period_frames: list[pd.DataFrame] = []
-    for scope, predictions in (
-            ("walk_forward_pre_validation", walk_prediction_frame),
-            ("validation", validation_predictions[selected]),
-            ("lockbox_test", lock_predictions)):
-        if predictions.empty:
-            continue
-        p, h, d = _portfolio(predictions, horizon, commission, tax, slippage, scope)
-        portfolio_frames.append(p); holding_frames.append(h); period_frames.append(d)
-    portfolios = pd.concat(portfolio_frames, ignore_index=True)
-    holdings = pd.concat(holding_frames, ignore_index=True)
-    portfolio_periods = pd.concat(period_frames, ignore_index=True)
-
-    return_audit, return_audit_summary = _return_audit(
-        conn, data, benchmark_code, horizon)
-    return_verified = bool(
-        return_audit_summary["price_coverage_rate"] >= .999
-        and return_audit_summary["label_match_rate"] >= .999
-        and return_audit_summary["benchmark_match_rate"] >= .999
-        and return_audit_summary["adjusted_price_verified"]
-        and return_audit_summary["dividend_verified"])
-    walk_independent = bool(walk.empty or (
-        walk["test_end"].max() < validation_start and walk["test_end"].max() < test_start))
-    walk_ic = float(walk["daily_rank_ic"].dropna().mean()) if not walk.empty else 0.0
-    fold_universe_rate = float(
-        (walk["top20_universe_net_excess_return"] > 0).mean()) if not walk.empty else 0.0
-    walk_top20 = portfolios[(portfolios["scope"] == "walk_forward_pre_validation")
-                            & (portfolios["top_fraction"] == .20)]
-    lock_top20 = portfolios[(portfolios["scope"] == "lockbox_test")
-                            & (portfolios["top_fraction"] == .20)]
-    criteria = {
-        "independent_evaluation_periods": walk_independent,
-        "immutable_v3_lockbox_registered": lockbox_registered,
-        "fresh_v3_lockbox_after_research_cutoff": fresh_v3_lockbox,
-        "point_in_time_universe_verified": universe_verified,
-        "return_calculation_fully_verified": return_verified,
-        "validation_daily_rank_ic_positive": bool(
-            pd.notna(tournament.iloc[0]["daily_rank_ic"])
-            and tournament.iloc[0]["daily_rank_ic"] > 0),
-        "walk_forward_daily_rank_ic_positive": walk_ic > 0,
-        "walk_forward_dual_benchmark_top20_positive": bool(
-            not walk_top20.empty
-            and walk_top20.iloc[0]["universe_net_excess_return"] > 0
-            and walk_top20.iloc[0]["etf_net_excess_return"] > 0),
-        "majority_folds_universe_excess_positive": fold_universe_rate > .5,
-        "validation_top_fraction_monotonic": _monotonic(portfolios, "validation"),
-        "lockbox_dual_benchmark_top20_positive": bool(
-            not lock_top20.empty
-            and lock_top20.iloc[0]["universe_net_excess_return"] > 0
-            and lock_top20.iloc[0]["etf_net_excess_return"] > 0),
-    }
-    verdict = "ADOPT" if all(criteria.values()) else "RESEARCH_ONLY"
-    independence = pd.DataFrame([
-        {"check": "walk_forward_before_validation", "passed": walk_independent,
-         "latest_walk_test_end": None if walk.empty else walk["test_end"].max(),
-         "validation_start": validation_start, "lockbox_start": test_start},
-        {"check": "label_purge_at_boundaries", "passed": True,
-         "latest_walk_test_end": None, "validation_start": validation_start,
-         "lockbox_start": test_start},
-        {"check": "immutable_v3_lockbox_registered", "passed": lockbox_registered,
-         "latest_walk_test_end": None, "validation_start": validation_start,
-         "lockbox_start": test_start},
-    ])
-    summary = {
-        "version": 3, "verdict": verdict,
-        "selected_model": selected.model_name,
-        "selected_target": selected.target_kind,
-        "selected_feature_set": selected.feature_set,
-        "rank_scope": rank_scope, "horizon": horizon,
-        "validation_period": [validation["feature_date"].min(), validation["feature_date"].max()],
-        "lockbox_period": [lockbox["feature_date"].min(), lockbox["feature_date"].max()],
-        "walk_forward_period": [None if walk.empty else walk["test_start"].min(),
-                                None if walk.empty else walk["test_end"].max()],
-        "walk_forward_folds": int(len(walk)),
-        "universe_history_status": history_status,
-        "research_seen_through": research_cutoff,
-        "return_audit": return_audit_summary,
-        "criteria": criteria,
-        "cost_assumptions_pct": {
-            "commission_one_way": commission, "sell_tax": tax,
-            "slippage_one_way": slippage,
-        },
-        "safety": "RESEARCH_AND_SHADOW_ONLY_NO_LIVE_ORDERS",
-        "note": "V2 lockbox results are not used to select the V3 model.",
-    }
-    prefix = Path(output_prefix)
-    prefix.parent.mkdir(parents=True, exist_ok=True)
-
-    def save(frame: pd.DataFrame, suffix: str) -> None:
-        frame.to_csv(prefix.with_name(prefix.name + suffix), index=False, encoding="utf-8-sig")
-
-    save(tournament, "_model_tournament.csv")
-    save(walk, "_walk_forward.csv")
-    save(portfolios, "_dual_benchmark_portfolios.csv")
-    save(portfolio_periods, "_portfolio_periods.csv")
-    save(holdings, "_holding_contributions.csv")
-    save(return_audit, "_return_audit.csv")
-    save(universe_audit, "_universe_audit.csv")
-    save(independence, "_independence_audit.csv")
-    prediction_columns = [
-        "code", "feature_date", "industry", "forward_return",
-        "benchmark_forward_return", "excess_return", "score",
-    ]
-    save(lock_predictions[prediction_columns], "_lockbox_predictions.csv")
-    prefix.with_name(prefix.name + "_verdict.json").write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    return summary

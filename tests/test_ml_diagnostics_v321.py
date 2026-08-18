@@ -1,17 +1,56 @@
 import subprocess
 import sys
+import sqlite3
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from database.database import connect
+from src.ml.feature_store import FEATURE_COLUMNS
 from src.ml.diagnostics_v321 import (
     RESEARCH_SEEN_THROUGH,
     _candidates,
     _financial_point_in_time_audit,
     run_ml_diagnostics_v321,
 )
-from tests.test_ml_diagnostics import _seed
+
+def _seed(conn: sqlite3.Connection, periods: int = 380, codes: int = 3) -> None:
+    """Create deterministic V3.2.1 diagnostic fixtures."""
+    dates = pd.bdate_range("2023-01-02", periods=periods)
+    feature_columns = [row[1] for row in conn.execute("PRAGMA table_info(ml_features)")]
+    label_columns = [row[1] for row in conn.execute("PRAGMA table_info(ml_labels)")]
+    rng = np.random.default_rng(7)
+    for code_index in range(codes):
+        code = f"{code_index + 1:06d}"
+        signal = rng.normal(size=periods)
+        for index, day in enumerate(dates):
+            feature = {column: None for column in feature_columns}
+            feature.update({"code": code, "feature_date": day.strftime("%Y%m%d"),
+                            "benchmark_code": "069500", "industry": f"업종{code_index}",
+                            "close": 10_000 + index, "volume": 100_000,
+                            "generated_at": "2026-01-01T00:00:00+00:00"})
+            for feature_index, column in enumerate(FEATURE_COLUMNS):
+                feature[column] = signal[index] + feature_index * .01
+            conn.execute(
+                f"INSERT INTO ml_features({','.join(feature_columns)}) "
+                f"VALUES({','.join('?' for _ in feature_columns)})",
+                tuple(feature[column] for column in feature_columns))
+            if index + 20 < periods:
+                excess = signal[index] + rng.normal(scale=.8)
+                label = {column: None for column in label_columns}
+                label.update({"code": code, "feature_date": day.strftime("%Y%m%d"),
+                              "benchmark_code": "069500", "horizon": 20,
+                              "forward_return": excess + .2, "benchmark_forward_return": .2,
+                              "excess_return": excess, "positive_excess": int(excess > 0),
+                              "max_drawdown": min(excess, 0),
+                              "label_available_at": dates[index + 20].strftime("%Y%m%d"),
+                              "generated_at": "2026-01-01T00:00:00+00:00"})
+                conn.execute(
+                    f"INSERT INTO ml_labels({','.join(label_columns)}) "
+                    f"VALUES({','.join('?' for _ in label_columns)})",
+                    tuple(label[column] for column in label_columns))
+    conn.commit()
 
 
 def test_v321_common_overlay_and_reports(tmp_path):

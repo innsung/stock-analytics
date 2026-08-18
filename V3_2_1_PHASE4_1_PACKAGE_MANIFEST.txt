@@ -1,9 +1,0 @@
-V3.2.1 Phase 4.1 Data Provider Hardening
-- .env KRX_ID/KRX_PW loading
-- pykrx >= 1.2.8 guard
-- krx-provider-check-v321 preflight CLI
-- fail-fast before long historical acquisition
-- provider_status.json audit without secrets
-- .env/.env.* git exclusion; .env.example safe template
-- research cutoff remains 20260709
-- no total-return fabrication

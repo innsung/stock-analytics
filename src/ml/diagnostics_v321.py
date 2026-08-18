@@ -9,13 +9,13 @@ import sqlite3
 import numpy as np
 import pandas as pd
 
-from src.ml.diagnostics_v2 import _rank_features, _split
-from src.ml.diagnostics_v3 import (
+from src.ml.diagnostics_features_v321 import _rank_features, _split
+from src.ml.diagnostics_research_v321 import (
     Candidate, _apply_universe_history, _bank_safe, _fit_predict,
     _read_universe_history, _registered_lockbox_start,
     _research_cutoff_and_lockbox_novelty,
 )
-from src.ml.diagnostics_v31 import (
+from src.ml.diagnostics_portfolio_v321 import (
     _apply_total_return_labels, _bootstrap_mean_ci, _concentration,
     _ic_rows, _monotonic, _portfolio_risk, _read_security_master,
     _read_total_return_history, _total_return_audit,
@@ -45,13 +45,13 @@ class V321Candidate:
 
     @property
     def is_champion(self) -> bool:
-        return self.strategy_name == "v31_champion"
+        return self.strategy_name == "current_champion"
 
 
 def _candidates() -> list[V321Candidate]:
     """A small, predeclared Champion-Challenger set; no candidate proliferation."""
     return [
-        V321Candidate("v31_champion", "elastic_net"),
+        V321Candidate("current_champion", "elastic_net"),
         V321Candidate("ridge_financial", "ridge"),
         V321Candidate("quality_momentum_balanced", "elastic_net", financial_threshold=.50,
                      momentum_weight=.55, risk_weight=.15, timing_threshold=.40),
@@ -692,7 +692,7 @@ def run_ml_diagnostics_v321(
         if not nested_audit.empty else False,
         "nested_selection_leakage_free": nested_clean,
         "validation_untouched_during_selection": nested_clean,
-        "v31_champion_preserved": any(c.is_champion for c in candidates),
+        "current_champion_preserved": any(c.is_champion for c in candidates),
         "common_risk_overlay_applied_to_all_strategies": True,
         "point_in_time_universe_verified": universe_verified,
         "total_return_history_verified": bool(total_summary["total_return_verified"]),
@@ -768,7 +768,7 @@ def run_ml_diagnostics_v321(
                                "live_orders": "BLOCKED",
                                "next_normal_sealed_test_estimate": "AROUND_2027_02"},
         "safety": "RESEARCH_AND_SHADOW_ONLY_NO_LIVE_ORDERS",
-        "note": "V3.1 remains the frozen Champion. V3.2.1 changes evaluation and risk semantics only; no new model is added. Research data is frozen through 2026-07-09 and the 2026 public test remains previously seen, not a fresh sealed test.",
+        "note": "The V3.2.1 Champion is frozen. Research data is frozen through 2026-07-09 and the 2026 public test remains previously seen, not a fresh sealed test.",
     }
     prefix = Path(output_prefix)
     prefix.parent.mkdir(parents=True, exist_ok=True)

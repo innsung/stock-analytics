@@ -48,12 +48,12 @@ def test_valuation_snapshot_rejects_post_cutoff(tmp_path):
 def test_selection_persistence_separates_supported_repeat_selection():
     dates = ["20240101", "20240201", "20240301", "20240401", "20240501"]
     holdings = pd.DataFrame([{
-        "scope": "validation_v31_champion", "feature_date": d, "top_fraction": .20,
+        "scope": "validation_current_champion", "feature_date": d, "top_fraction": .20,
         "code": "005930", "name": "Samsung", "industry": "IT", "score": .9,
         "score_percentile": 1.0, "forward_return": 5.0,
     } for d in dates])
     periods = pd.DataFrame([{
-        "scope": "validation_v31_champion", "feature_date": d, "top_fraction": .20,
+        "scope": "validation_current_champion", "feature_date": d, "top_fraction": .20,
         "universe_equal_weight_return": 1.0, "etf_return": 2.0,
     } for d in dates])
     audit = selection_persistence_audit(holdings, periods)

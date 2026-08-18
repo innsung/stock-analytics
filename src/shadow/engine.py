@@ -11,7 +11,7 @@ from src.analysis.universe_ranker import rank_universe
 from src.backtest.realistic_portfolio import _capped_weights
 
 
-STRATEGY_VERSION = "quality_value_momentum_v3_eligibility"
+STRATEGY_VERSION = "quality_value_momentum_v321_eligibility"
 
 
 @dataclass

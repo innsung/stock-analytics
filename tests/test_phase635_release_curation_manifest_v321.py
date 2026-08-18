@@ -8,7 +8,7 @@ def test_allowlists_release_sources_and_safe_metadata():
     assert classify_curation_path("docs/release.md")[0] == "PROPOSE_INCLUDE"
     assert classify_curation_path("config/example.template.csv")[0] == "PROPOSE_INCLUDE"
     assert classify_curation_path("requirements.txt")[0] == "PROPOSE_INCLUDE"
-    assert classify_curation_path("V3_2_1_HISTORICAL_DATA_PHASE4_1.md")[0] == "PROPOSE_INCLUDE"
+    assert classify_curation_path("V3_2_1_RELEASE.md")[0] == "PROPOSE_INCLUDE"
 
 
 def test_requires_review_or_excludes_unsafe_paths():
