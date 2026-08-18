@@ -94,18 +94,18 @@ def run_portfolio_command(
             result.yearly_performance.to_csv(prefix.with_name(prefix.name + f"_{label}_yearly.csv"), index=False, encoding="utf-8-sig")
         dev, lock = verified.development, verified.lockbox
         print(f"""[현실 포트폴리오 개발구간: {dev.start_date} ~ {dev.end_date}]
-    전략 수익률: {dev.total_return:.2f}% / 시장 ETF: {dev.benchmark_return:.2f}%
-    전략 MDD: {dev.mdd:.2f}% / 시장 ETF MDD: {dev.benchmark_mdd:.2f}%
-    전략 샤프: {dev.sharpe:.2f} / 시장 ETF 샤프: {dev.benchmark_sharpe:.2f}
-    거래비용: {dev.total_cost:,.0f}원 / 거래: {dev.trades}건
-    
-    [최종 봉인구간: {lock.start_date} ~ {lock.end_date}]
-    전략 수익률: {lock.total_return:.2f}% / 시장 ETF: {lock.benchmark_return:.2f}%
-    초과수익률: {lock.excess_return:.2f}%p
-    전략 MDD: {lock.mdd:.2f}% / 시장 ETF MDD: {lock.benchmark_mdd:.2f}%
-    전략 샤프: {lock.sharpe:.2f} / 시장 ETF 샤프: {lock.benchmark_sharpe:.2f}
-    최종 봉인 판정: {verified.verdict}
-    결과 접두사: {args.output_prefix}""")
+전략 수익률: {dev.total_return:.2f}% / 시장 ETF: {dev.benchmark_return:.2f}%
+전략 MDD: {dev.mdd:.2f}% / 시장 ETF MDD: {dev.benchmark_mdd:.2f}%
+전략 샤프: {dev.sharpe:.2f} / 시장 ETF 샤프: {dev.benchmark_sharpe:.2f}
+거래비용: {dev.total_cost:,.0f}원 / 거래: {dev.trades}건
+
+[최종 봉인구간: {lock.start_date} ~ {lock.end_date}]
+전략 수익률: {lock.total_return:.2f}% / 시장 ETF: {lock.benchmark_return:.2f}%
+초과수익률: {lock.excess_return:.2f}%p
+전략 MDD: {lock.mdd:.2f}% / 시장 ETF MDD: {lock.benchmark_mdd:.2f}%
+전략 샤프: {lock.sharpe:.2f} / 시장 ETF 샤프: {lock.benchmark_sharpe:.2f}
+최종 봉인 판정: {verified.verdict}
+결과 접두사: {args.output_prefix}""")
     elif args.command in {"external-verify", "common-verify"}:
         if args.command == "common-verify":
             mapping = {}
@@ -124,14 +124,14 @@ def run_portfolio_command(
             common.industries.to_csv(prefix.with_name(prefix.name + "_industries.csv"), index=False, encoding="utf-8-sig")
             common.portfolio_curve.to_csv(prefix.with_name(prefix.name + "_portfolio.csv"), encoding="utf-8-sig")
             print(f"""[다종목 공통 파라미터 워크포워드]
-    통합 포트폴리오 수익률: {common.portfolio_return:.2f}%
-    통합 포트폴리오 MDD: {common.portfolio_mdd:.2f}%
-    통합 포트폴리오 샤프: {common.portfolio_sharpe:.2f}
-    통합 벤치마크 수익률: {common.benchmark_return:.2f}%
-    통합 벤치마크 MDD: {common.benchmark_mdd:.2f}%
-    통합 벤치마크 샤프: {common.benchmark_sharpe:.2f}
-    최종 판정: {common.verdict}
-    결과 접두사: {args.output_prefix}""")
+통합 포트폴리오 수익률: {common.portfolio_return:.2f}%
+통합 포트폴리오 MDD: {common.portfolio_mdd:.2f}%
+통합 포트폴리오 샤프: {common.portfolio_sharpe:.2f}
+통합 벤치마크 수익률: {common.benchmark_return:.2f}%
+통합 벤치마크 MDD: {common.benchmark_mdd:.2f}%
+통합 벤치마크 샤프: {common.benchmark_sharpe:.2f}
+최종 판정: {common.verdict}
+결과 접두사: {args.output_prefix}""")
             return
         client = None if args.skip_collect else KISClient(settings)
         rows = []
@@ -169,5 +169,4 @@ def run_portfolio_command(
             common.stocks.to_csv(base.with_name(base.stem + "_common_stocks.csv"), index=False, encoding="utf-8-sig")
             common.industries.to_csv(base.with_name(base.stem + "_industries.csv"), index=False, encoding="utf-8-sig")
             common.portfolio_curve.to_csv(base.with_name(base.stem + "_portfolio.csv"), encoding="utf-8-sig")
-            print(f"공통 파라미터 포트폴리오: 수익 {common.portfolio_return:.2f}%, MDD {common.portfolio_mdd:.2f}%, 샤프 {common.portfolio_sharpe:.2f}, 벤치마크 {common.benchmark_return:.2f}%, 판정 {common.verdict}")
-    
+                print(f"공통 파라미터 포트폴리오: 수익 {common.portfolio_return:.2f}%, MDD {common.portfolio_mdd:.2f}%, 샤프 {common.portfolio_sharpe:.2f}, 벤치마크 {common.benchmark_return:.2f}%, 판정 {common.verdict}")
