@@ -1,0 +1,12 @@
+V3.2.1 Historical Data Acquisition Phase 4
+- src/ml/historical_acquisition_v321.py
+- acquire-historical-data-v321 CLI
+- KRX/pykrx historical valuation acquisition adapter
+- optional index constituent observation acquisition
+- strict 20260709 research cutoff
+- no current-value backfill/interpolation
+- no false total-return verification
+- friendly missing-file/provider errors
+- pykrx dependency
+- tests/test_historical_acquisition_v321.py
+Test result: 52 passed

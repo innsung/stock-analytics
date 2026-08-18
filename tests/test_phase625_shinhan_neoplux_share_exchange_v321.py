@@ -1,0 +1,7 @@
+import pandas as pd
+from src.ml.phase625_shinhan_neoplux_share_exchange_v321 import audit_shinhan_neoplux_share_exchange_v321
+class Dart:
+ def document_texts(self,r):return [{"name":"x.xml","text":'<TE ACODE="EXCH_CST_CNT">25,227,445</TE><TE ACODE="EXCH_RT">신한지주 : 네오플럭스 = 1: 0.0893119</TE><TE ACODE="EXCH_EFT">기존 주주의 주식총수 0.02% 미만 변화</TE><TE ACODE="MGR_STO">소규모 주식교환으로 매수청구권 없음</TE>'}]
+def test_resolves_small_scale_subsidiary_exchange(tmp_path):
+ pd.DataFrame([{"queue_event_id":"6bc7eafe43bf25efd8f1","code":"055550","source_reference_date":"20201113","source_description":"주요사항보고서(주식교환ㆍ이전결정)"}]).to_csv(tmp_path/"q.csv",index=False);pd.DataFrame([{"rcept_no":"20201113001192","report_nm":"주요사항보고서(주식교환ㆍ이전결정)"},{"rcept_no":"20201208000431","report_nm":"[기재정정]주요사항보고서(주식교환ㆍ이전결정)"}]).to_csv(tmp_path/"d.csv",index=False);pd.DataFrame([{"queue_event_id":"9c9b83fcf9dc64c75fa2","child_rcept_no":"20201123000205","parent_rcept_no":"20201113001192","resolved_anchor_valid":"True","verification_status":"NOT_APPLICABLE_EVIDENCE"}]).to_csv(tmp_path/"p.csv",index=False)
+ r=audit_shinhan_neoplux_share_exchange_v321(Dart(),actionable_queue_csv=str(tmp_path/"q.csv"),disclosures_csv=str(tmp_path/"d.csv"),phase621_audit_csv=str(tmp_path/"p.csv"),documents_dir=str(tmp_path/"docs"),evidence_output_csv=str(tmp_path/"e.csv"),audit_output_csv=str(tmp_path/"a.csv"),summary_json=str(tmp_path/"s.json"));assert r["not_applicable_evidence_rows"]==1
