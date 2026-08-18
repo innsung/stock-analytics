@@ -141,4 +141,3 @@ OOS-학습 CAGR 차이: {result.average_degradation:.2f}%p
 하위 5% MDD: {monte.mdd_p05:.2f}%
 몬테카를로 판정: {monte.verdict}
 결과 파일 접두사: {args.output_prefix}""")
-
