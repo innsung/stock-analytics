@@ -19,8 +19,7 @@ from src.analysis.universe_ranker import rank_universe
 from src.backtest.engine import run_ma_rsi_strategy
 from src.backtest.multi_asset import common_parameter_walk_forward
 from src.backtest.realistic_portfolio import run_lockbox
-from src.collector.collectors import (collect_financials, collect_prices,
-                                      collect_prices_incremental, collect_valuation)
+from src.collector.collectors import collect_prices_incremental, collect_valuation
 from src.dart.client import DartClient
 from src.kis.client import KISClient, KISRateLimitError
 from src.ml.data_integrity_v321 import import_valuation_snapshots, build_data_foundation_v321
@@ -3576,46 +3575,21 @@ def main() -> None:
             print(f"Bundle manifest: {bundle['manifest']}")
             if bundle["zip_path"]:
                 print(f"결과 ZIP: {bundle['zip_path']}")
-    elif args.command == "collect-price":
-        result = collect_prices_incremental(conn, KISClient(settings), args.code, args.days)
-        print("API 호출 생략: 기존 데이터가 충분합니다." if result.api_skipped else f"{result.saved}건 증분 저장 완료: {result.requested_ranges}")
-    elif args.command == "collect-financial":
-        print(f"{collect_financials(conn, DartClient(settings.dart_api_key), args.code, args.year, args.report_code)}건 저장 완료")
-    elif args.command == "collect-multi":
-        args.codes, _ = resolve_codes_and_industries(args)
-        client = KISClient(settings)
-        for code in args.codes:
-            try:
-                result = collect_prices_incremental(conn, client, code, args.days)
-                print(f"{code}: " + ("API 생략(충분)" if result.api_skipped else f"{result.saved}건 증분 저장"))
-            except KISRateLimitError as exc:
-                print(f"{code}: 수집 중단 - {exc}")
-                print("KIS 제한 오류이므로 남은 종목의 API 호출을 중단합니다.")
-                break
-            except Exception as exc:
-                print(f"{code}: 수집 오류 - {exc} (다음 종목 계속)")
-    elif args.command == "collect-valuation":
-        args.codes, _ = resolve_codes_and_industries(args)
-        client = KISClient(settings)
-        for code in args.codes:
-            try:
-                collect_valuation(conn, client, code)
-                print(f"{code}: PER·PBR·EPS·BPS 가치지표 저장")
-            except KISRateLimitError as exc:
-                print(str(exc)); break
-            except Exception as exc:
-                print(f"{code}: 가치지표 오류 - {exc}")
-    elif args.command == "collect-financial-series":
-        args.codes, _ = resolve_codes_and_industries(args)
-        client = DartClient(settings.dart_api_key)
-        for code in args.codes:
-            for year in range(args.start_year, args.end_year + 1):
-                for report_code in ("11013", "11012", "11014", "11011"):
-                    try:
-                        count = collect_financials(conn, client, code, year, report_code)
-                        print(f"{code} {year} {report_code}: {count}건")
-                    except Exception as exc:
-                        print(f"{code} {year} {report_code}: 생략 - {exc}")
+    elif args.command in {
+        "collect-price",
+        "collect-financial",
+        "collect-multi",
+        "collect-valuation",
+        "collect-financial-series",
+    }:
+        from src.cli.collection_commands import run_collection_command
+
+        run_collection_command(
+            conn,
+            settings,
+            args,
+            resolve_codes=resolve_codes_and_industries,
+        )
     elif args.command in {"rank-universe", "shadow-run"}:
         args.codes, mapping = resolve_codes_and_industries(args)
         if args.command == "rank-universe":
