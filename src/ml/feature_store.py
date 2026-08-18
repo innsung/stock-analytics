@@ -74,7 +74,7 @@ def _ratio(numerator: float | None, denominator: float | None) -> float | None:
 def point_in_time_annual_financials(conn: sqlite3.Connection, code: str) -> pd.DataFrame:
     """Build annual financial facts keyed by the date investors could first know them."""
     raw = pd.read_sql_query(
-        """SELECT fiscal_year,disclosed_at,sj_div,account_id,account_name,amount
+        """SELECT fiscal_year,disclosed_at,fs_div,sj_div,account_id,account_name,amount
            FROM financial_statements
            WHERE code=? AND report_code='11011' AND fs_div IN ('CFS','OFS')
              AND disclosed_at IS NOT NULL AND disclosed_at<>''
@@ -83,27 +83,18 @@ def point_in_time_annual_financials(conn: sqlite3.Connection, code: str) -> pd.D
     if raw.empty:
         return pd.DataFrame()
     raw["disclosed_at"] = raw["disclosed_at"].astype(str).str.replace("-", "", regex=False)
-    summaries: list[dict] = []
     # 연도별 CFS가 하나라도 있으면 CFS만, 없으면 OFS만 사용한다.
-    fs_rows = pd.read_sql_query(
-        """SELECT fiscal_year,fs_div,COUNT(*) AS rows FROM financial_statements
-           WHERE code=? AND report_code='11011' AND fs_div IN ('CFS','OFS')
-           GROUP BY fiscal_year,fs_div""", conn, params=(code,))
-    preferred = {int(year): ("CFS" if "CFS" in set(group["fs_div"]) else "OFS")
-                 for year, group in fs_rows.groupby("fiscal_year")}
-    raw_fs = pd.read_sql_query(
-        """SELECT fiscal_year,disclosed_at,fs_div,sj_div,account_id,account_name,amount
-           FROM financial_statements WHERE code=? AND report_code='11011'
-             AND fs_div IN ('CFS','OFS') AND disclosed_at IS NOT NULL AND disclosed_at<>''
-           ORDER BY fiscal_year,account_order""", conn, params=(code,))
-    raw_fs["disclosed_at"] = raw_fs["disclosed_at"].astype(str).str.replace("-", "", regex=False)
-    raw_fs = raw_fs[raw_fs.apply(
-        lambda row: row["fs_div"] == preferred.get(int(row["fiscal_year"])), axis=1)]
-    for (year, disclosed_at), group in raw_fs.groupby(["fiscal_year", "disclosed_at"], sort=True):
+    preferred = raw.groupby("fiscal_year")["fs_div"].agg(
+        lambda values: "CFS" if values.eq("CFS").any() else "OFS"
+    )
+    raw = raw[raw["fs_div"].eq(raw["fiscal_year"].map(preferred))]
+
+    summaries: list[dict] = []
+    for (year, disclosed_at), group in raw.groupby(["fiscal_year", "disclosed_at"], sort=True):
         values = {key: _pick(group, key) for key in ACCOUNT_RULES}
         summaries.append({"financial_fiscal_year": int(year),
                           "financial_disclosed_at": disclosed_at,
-                          "financial_fs_div": preferred[int(year)], **values})
+                          "financial_fs_div": preferred.loc[year], **values})
     facts = pd.DataFrame(summaries).sort_values(
         ["financial_fiscal_year", "financial_disclosed_at"]).drop_duplicates(
             "financial_fiscal_year", keep="first")
@@ -178,14 +169,20 @@ def _technical_frame(prices: pd.DataFrame, benchmark: pd.DataFrame) -> pd.DataFr
     return data
 
 
-def build_code_features(conn: sqlite3.Connection, code: str, industry: str,
-                        benchmark_code: str) -> pd.DataFrame:
+def build_code_features(
+    conn: sqlite3.Connection,
+    code: str,
+    industry: str,
+    benchmark_code: str,
+    benchmark: pd.DataFrame | None = None,
+) -> pd.DataFrame:
     prices = pd.read_sql_query(
         "SELECT date,open,high,low,close,volume FROM stock_prices WHERE code=? ORDER BY date",
         conn, params=(code,))
-    benchmark = pd.read_sql_query(
-        "SELECT date,close FROM stock_prices WHERE code=? ORDER BY date", conn,
-        params=(benchmark_code,))
+    if benchmark is None:
+        benchmark = pd.read_sql_query(
+            "SELECT date,close FROM stock_prices WHERE code=? ORDER BY date", conn,
+            params=(benchmark_code,))
     if len(prices) < 127 or len(benchmark) < 127:
         return pd.DataFrame()
     data = _technical_frame(prices, benchmark)
@@ -290,7 +287,13 @@ def build_feature_store(conn: sqlite3.Connection, codes: list[str], industries: 
         raise ValueError(f"벤치마크 {benchmark_code} 가격 데이터가 없습니다.")
     feature_count = label_count = 0
     for code in codes:
-        features = build_code_features(conn, code, industries.get(code, "미분류"), benchmark_code)
+        features = build_code_features(
+            conn,
+            code,
+            industries.get(code, "미분류"),
+            benchmark_code,
+            benchmark=benchmark,
+        )
         prices = pd.read_sql_query(
             "SELECT date,close FROM stock_prices WHERE code=? ORDER BY date", conn, params=(code,))
         labels = build_labels(prices, benchmark, code, benchmark_code, horizons)

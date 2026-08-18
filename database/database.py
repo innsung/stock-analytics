@@ -149,13 +149,24 @@ CREATE TABLE IF NOT EXISTS ml_research_cutoff_registry (
     updated_at TEXT NOT NULL,
     PRIMARY KEY(benchmark_code, horizon, diagnostic_version)
 );
+CREATE INDEX IF NOT EXISTS idx_financial_statements_lookup
+    ON financial_statements(code, report_code, fiscal_year, fs_div, disclosed_at);
+CREATE INDEX IF NOT EXISTS idx_daily_run_logs_portfolio_started
+    ON daily_run_logs(portfolio_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_shadow_proposals_portfolio_date
+    ON shadow_book_proposals(portfolio_id, proposal_date);
 """
 
 
 def connect(db_path: Path) -> sqlite3.Connection:
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(db_path)
+    # Real collection and analysis jobs can overlap briefly.  Waiting for the
+    # writer is safer than failing immediately with "database is locked".
+    conn = sqlite3.connect(db_path, timeout=30)
+    conn.execute("PRAGMA busy_timeout=30000")
     conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA foreign_keys=ON")
     _migrate_financial_schema(conn)
     conn.executescript(SCHEMA)
     _migrate_shadow_books(conn)

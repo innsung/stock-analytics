@@ -59,9 +59,20 @@ def test_feature_store_and_labels_are_point_in_time(tmp_path):
                          close - 100, close, 1_000_000 + index, "TEST"))
         upsert_prices(conn, rows)
     upsert_financials(conn, _financial_rows("005930", 2022, "20230331", 1.0))
+    statements = []
+    conn.set_trace_callback(statements.append)
     features, labels = build_feature_store(conn, ["005930"], {"005930": "반도체"}, "069500")
+    conn.set_trace_callback(None)
     assert features > 400
     assert labels == (700 - 5) + (700 - 20) + (700 - 60)
+    financial_reads = [sql for sql in statements
+                       if sql.lstrip().upper().startswith("SELECT")
+                       and "FROM financial_statements" in sql]
+    benchmark_reads = [sql for sql in statements
+                       if sql.lstrip().upper().startswith("SELECT")
+                       and "FROM stock_prices" in sql and "069500" in sql]
+    assert len(financial_reads) == 1
+    assert len(benchmark_reads) == 1
     before = conn.execute("""SELECT financial_fiscal_year FROM ml_features
         WHERE code='005930' AND feature_date<'20230331'
         ORDER BY feature_date DESC LIMIT 1""").fetchone()

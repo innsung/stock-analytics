@@ -28,9 +28,6 @@ from src.collector.collectors import (collect_financials, collect_prices,
                                       collect_prices_incremental, collect_valuation)
 from src.dart.client import DartClient
 from src.kis.client import KISClient, KISRateLimitError
-from src.ml.feature_store import build_feature_store
-from src.ml.models import predict_latest, train_baselines, walk_forward_baselines
-from src.ml.diagnostics_v321 import run_ml_diagnostics_v321
 from src.ml.data_integrity_v321 import import_valuation_snapshots, build_data_foundation_v321
 from src.ml.historical_acquisition_v321 import acquire_historical_data_v321, check_krx_provider_v321
 from src.ml.result_bundle_v321 import create_result_bundle_v321
@@ -1543,6 +1540,8 @@ def main() -> None:
     elif args.command == "daily-shadow":
         execute_daily_shadow(conn, settings, args)
     elif args.command == "build-feature-store":
+        from src.ml.feature_store import build_feature_store
+
         args.codes, mapping = resolve_codes_and_industries(args)
         feature_count, label_count = build_feature_store(
             conn, args.codes, mapping, args.benchmark_code)
@@ -1550,6 +1549,8 @@ def main() -> None:
         print(f"미래수익 라벨 저장: {label_count:,}행 (5·20·60거래일)")
         print("시점 규칙: 각 행에는 feature_date까지 공시·관측된 정보만 사용")
     elif args.command == "ml-train":
+        from src.ml.models import train_baselines
+
         metadata = train_baselines(
             conn, args.horizon, args.benchmark_code, args.validation_days,
             args.test_days, args.artifact, args.output_prefix)
@@ -1559,6 +1560,8 @@ def main() -> None:
               f"{metadata['test_start']}~{metadata['test_end']}")
         print(f"모델 저장: {metadata['artifact_path']}")
     elif args.command == "ml-walk-forward":
+        from src.ml.models import walk_forward_baselines
+
         result = walk_forward_baselines(
             conn, args.horizon, args.benchmark_code, args.min_train_days,
             args.test_days, args.output_csv)
@@ -1568,6 +1571,8 @@ def main() -> None:
         print(summary.to_string())
         print(f"구간별 결과 저장: {args.output_csv}")
     elif args.command == "ml-predict":
+        from src.ml.models import predict_latest
+
         predictions = predict_latest(conn, args.artifact, args.output_csv)
         print(predictions[["rank", "code", "feature_date", "probability",
                            "selected_model"]].to_string(index=False))
@@ -3527,6 +3532,8 @@ def main() -> None:
         print("phase516 module: IMPORT_OK")
         print("상태: PHASE516_APPLIED")
     elif args.command == "ml-diagnose-v321":
+        from src.ml.diagnostics_v321 import run_ml_diagnostics_v321
+
         try:
             health = assert_persistent_data_v321(conn, settings.db_path, args.benchmark_code)
         except RuntimeError as exc:
