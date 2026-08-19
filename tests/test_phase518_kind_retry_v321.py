@@ -61,10 +61,10 @@ def test_build_retry_queue_without_live_fetch(tmp_path: Path):
     assert o.loc[0, "kind_doc_no"] == "20260527001263"
 
 
-def test_main_namespace_registers_kind_retry_builder():
-    import src.main as main_module
+def test_kind_cli_namespace_registers_kind_retry_builder():
+    import src.cli.kind_commands as kind_commands
 
-    assert main_module.build_kind_retry_queue_v321 is build_kind_retry_queue_v321
+    assert kind_commands.build_kind_retry_queue_v321 is build_kind_retry_queue_v321
 
 
 def test_successful_fetch_persists_document_with_hash(tmp_path: Path, monkeypatch):

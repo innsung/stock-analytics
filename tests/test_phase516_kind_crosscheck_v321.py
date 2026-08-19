@@ -173,7 +173,6 @@ def test_next_hop_discovery(tmp_path):
     assert any("dist" in x.lower() for x in f["next_hop"].astype(str))
 
 
-def test_main_namespace_contains_phase516_functions():
-    m=importlib.import_module("src.main")
+def test_kind_cli_namespace_contains_phase516_function():
+    m=importlib.import_module("src.cli.kind_commands")
     assert hasattr(m,"crosscheck_kind_dividend_disclosures_v321")
-    assert hasattr(m,"discover_kodex_next_hops_v321")
