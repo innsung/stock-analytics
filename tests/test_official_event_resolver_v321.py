@@ -142,8 +142,8 @@ def test_not_applicable_requires_explicit_evidence(tmp_path):
     assert result["unresolved_queue_events"] == 0
 
 
-def test_main_namespace_contains_phase53_54_55_functions():
-    m = importlib.import_module("src.main")
+def test_event_cli_namespace_contains_phase53_54_55_functions():
+    m = importlib.import_module("src.cli.event_commands")
     expected = [
         "acquire_payout_action_facts_v321",
         "build_event_reconciliation_template_v321",

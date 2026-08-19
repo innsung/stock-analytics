@@ -88,7 +88,7 @@ def test_merge_strict_evidence_rejects_conflicts(tmp_path):
         merge_strict_evidence_v321(evidence_csvs=[str(a),str(b)], output_csv=str(tmp_path/"out.csv"))
 
 
-def test_main_namespace_contains_phase57_functions():
-    m=importlib.import_module("src.main")
+def test_event_cli_namespace_contains_phase57_functions():
+    m=importlib.import_module("src.cli.event_commands")
     assert hasattr(m,"build_market_adjustment_evidence_v321")
     assert hasattr(m,"merge_strict_evidence_v321")

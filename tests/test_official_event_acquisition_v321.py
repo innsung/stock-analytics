@@ -89,7 +89,7 @@ def test_enrich_adds_candidate_summary_but_not_strict_fields(tmp_path):
     assert int(f.iloc[0]["official_candidate_count"])==1
 
 
-def test_main_namespace_contains_phase56_functions():
-    m=importlib.import_module("src.main")
+def test_event_cli_namespace_contains_phase56_functions():
+    m=importlib.import_module("src.cli.event_commands")
     assert hasattr(m,"acquire_official_event_candidates_v321")
     assert hasattr(m,"enrich_official_evidence_template_v321")
