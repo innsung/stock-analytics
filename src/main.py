@@ -25,16 +25,6 @@ from src.ml.phase532_recent_dividend_acquisition_manifest_v321 import build_rece
 from src.ml.phase536_company_name_recovery_v321 import recover_acquisition_company_names_v321
 from src.ml.phase542_market_notice_coverage_audit_v321 import audit_market_notice_coverage_v321
 from src.ml.phase543_recent_corporate_action_classifier_v321 import classify_recent_corporate_actions_v321
-from src.ml.phase544_corporate_action_candidate_manifest_v321 import build_corporate_action_candidate_manifest_v321
-from src.ml.phase545_market_adjustment_candidate_selector_v321 import select_market_adjustment_candidates_v321
-from src.ml.phase546_corporate_action_document_acquisition_v321 import acquire_missing_corporate_action_documents_v321
-from src.ml.phase547_corporate_action_document_parser_v321 import parse_corporate_action_documents_v321
-from src.ml.phase548_complex_action_semantic_review_v321 import review_complex_corporate_actions_v321
-from src.ml.phase549_spinoff_valuation_audit_v321 import audit_listed_spinoff_valuation_v321
-from src.ml.phase550_spinoff_distribution_ledger_v321 import build_spinoff_distribution_ledger_v321
-from src.ml.phase551_spinoff_fractional_settlement_v321 import audit_spinoff_fractional_settlement_v321
-from src.ml.phase552_spinoff_evidence_completeness_v321 import audit_spinoff_evidence_completeness_v321
-from src.ml.phase553_complex_action_coverage_gate_v321 import build_complex_action_coverage_gate_v321
 from src.ml.phase555_current_resolution_priority_v321 import prioritize_current_resolution_backlog_v321
 from src.ml.phase556_subsidiary_document_acquisition_v321 import acquire_subsidiary_action_documents_v321
 from src.ml.phase557_subsidiary_applicability_parser_v321 import parse_subsidiary_action_applicability_v321
@@ -1955,159 +1945,26 @@ def main() -> None:
         print(f"Direct issuer actions: {result['direct_issuer_action_rows']:,}")
         print(f"Output: {result['output_csv']}")
         print(f"Summary: {result['summary_json']}")
-    elif args.command == "build-corporate-action-candidate-manifest-v321":
-        try:
-            result = build_corporate_action_candidate_manifest_v321(
-                classified_queue_csv=args.classified_queue_csv,
-                official_candidates_csv=args.official_candidates_csv,
-                output_csv=args.output_csv,
-                summary_json=args.summary_json,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.44] {exc}")
-        print("[V3.2.1 Phase 5.44 Corporate Action Candidate Manifest]")
-        print(f"Targets: {result['target_rows']:,}")
-        print(f"Status counts: {result['status_counts']}")
-        print(f"Output: {result['output_csv']}")
-        print(f"Summary: {result['summary_json']}")
-    elif args.command == "select-market-adjustment-candidates-v321":
-        try:
-            result = select_market_adjustment_candidates_v321(
-                candidate_manifest_csv=args.candidate_manifest_csv,
-                official_candidates_csv=args.official_candidates_csv,
-                output_csv=args.output_csv,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.45] {exc}")
-        print("[V3.2.1 Phase 5.45 Market Adjustment Candidate Selector]")
-        print(f"Receipts: {result['manifest_receipts']:,}")
-        print(f"Selected: {result['selected_candidates']:,}")
-        print(f"Action counts: {result['action_counts']}")
-        print(f"Output: {result['output_csv']}")
-    elif args.command == "acquire-missing-corporate-action-documents-v321":
-        try:
-            result = acquire_missing_corporate_action_documents_v321(
-                DartClient(settings.dart_api_key),
-                candidate_manifest_csv=args.candidate_manifest_csv,
-                disclosures_csv=args.disclosures_csv,
-                documents_dir=args.documents_dir,
-                output_csv=args.output_csv,
-            )
-        except (FileNotFoundError, ValueError, RuntimeError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.46] {exc}")
-        print("[V3.2.1 Phase 5.46 Corporate Action Document Acquisition]")
-        print(f"Targets: {result['target_rows']:,}")
-        print(f"Acquired: {result['acquired_rows']:,}")
-        print(f"Status counts: {result['status_counts']}")
-        print(f"Output: {result['output_csv']}")
-        print(f"Documents: {result['documents_dir']}")
-    elif args.command == "parse-corporate-action-documents-v321":
-        try:
-            result = parse_corporate_action_documents_v321(
-                acquisition_csv=args.acquisition_csv,
-                output_csv=args.output_csv,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.47] {exc}")
-        print("[V3.2.1 Phase 5.47 Corporate Action Document Parser]")
-        print(f"Input rows: {result['input_rows']:,}")
-        print(f"Parsed rows: {result['parsed_rows']:,}")
-        print(f"Eligibility: {result['eligibility_counts']}")
-        print(f"Output: {result['output_csv']}")
-    elif args.command == "review-complex-corporate-actions-v321":
-        try:
-            result = review_complex_corporate_actions_v321(
-                candidate_manifest_csv=args.candidate_manifest_csv,
-                official_candidates_csv=args.official_candidates_csv,
-                not_applicable_csv=args.not_applicable_csv,
-                audit_csv=args.audit_csv,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.48] {exc}")
-        print("[V3.2.1 Phase 5.48 Complex Corporate Action Review]")
-        print(f"Reviewed: {result['reviewed_rows']:,}")
-        print(f"NOT_APPLICABLE: {result['not_applicable_rows']:,}")
-        print(f"Complex unresolved: {result['complex_rows']:,}")
-        print(f"Evidence: {result['not_applicable_csv']}")
-        print(f"Audit: {result['audit_csv']}")
-    elif args.command == "audit-listed-spinoff-valuation-v321":
-        try:
-            get_settings()
-            result = audit_listed_spinoff_valuation_v321(
-                official_candidates_csv=args.official_candidates_csv,
-                output_csv=args.output_csv,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.49] {exc}")
-        print("[V3.2.1 Phase 5.49 Listed Spin-off Valuation Audit]")
-        print(f"Audited: {result['audited_rows']:,}")
-        print(f"Parent price-series factor: {result['factor']:.12f}")
-        print(f"Status: {result['audit_status']}")
-        print(f"Audit: {result['output_csv']}")
-    elif args.command == "build-spinoff-distribution-ledger-v321":
-        try:
-            result = build_spinoff_distribution_ledger_v321(
-                valuation_audit_csv=args.valuation_audit_csv,
-                output_csv=args.output_csv,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.50] {exc}")
-        print("[V3.2.1 Phase 5.50 Spin-off Distribution Ledger]")
-        print(f"Events: {result['events']:,}")
-        print(f"Ledger rows: {result['ledger_rows']:,}")
-        print(f"Canonical total return ready: {result['canonical_total_return_ready']}")
-        print(f"Ledger: {result['output_csv']}")
-    elif args.command == "audit-spinoff-fractional-settlement-v321":
-        try:
-            result = audit_spinoff_fractional_settlement_v321(
-                official_candidates_csv=args.official_candidates_csv,
-                valuation_audit_csv=args.valuation_audit_csv,
-                rule_output_csv=args.rule_output_csv,
-                scenario_output_csv=args.scenario_output_csv,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.51] {exc}")
-        print("[V3.2.1 Phase 5.51 Spin-off Fractional Settlement Audit]")
-        print(f"Verified rules: {result['verified_rules']:,}")
-        print(f"Scenarios: {result['scenario_rows']:,}")
-        print(f"Canonical total return ready: {result['canonical_total_return_ready']}")
-        print(f"Rule: {result['rule_output_csv']}")
-        print(f"Scenarios: {result['scenario_output_csv']}")
-    elif args.command == "audit-spinoff-evidence-completeness-v321":
-        try:
-            settings = get_settings()
-            result = audit_spinoff_evidence_completeness_v321(
-                DartClient(settings.dart_api_key),
-                official_candidates_csv=args.official_candidates_csv,
-                output_csv=args.output_csv,
-                document_path=args.document_path,
-            )
-        except (FileNotFoundError, ValueError, RuntimeError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.52] {exc}")
-        print("[V3.2.1 Phase 5.52 Spin-off Evidence Completeness]")
-        print(f"Checks: {result['checks']:,}")
-        print(f"Verified: {result['verified']:,}")
-        print(f"Missing: {result['missing']:,}")
-        print(f"Canonical position transfer ready: {result['canonical_position_transfer_ready']}")
-        print(f"Audit: {result['output_csv']}")
-        print(f"Original document: {result['document_path']}")
-    elif args.command == "build-complex-action-coverage-gate-v321":
-        try:
-            result = build_complex_action_coverage_gate_v321(
-                base_coverage_json=args.base_coverage_json,
-                evidence_audit_csv=args.evidence_audit_csv,
-                output_json=args.output_json,
-                audit_output_csv=args.audit_output_csv,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.53] {exc}")
-        print("[V3.2.1 Phase 5.53 Complex Action Coverage Gate]")
-        print(f"Gate status: {result['gate_status']}")
-        print(f"Blockers: {result['blockers']:,}")
-        print(f"Capital actions complete: {result['capital_actions_complete']}")
-        print(f"Coverage complete: {result['coverage_complete']}")
-        print(f"Guarded coverage: {result['output_json']}")
-        print(f"Audit: {result['audit_output_csv']}")
+    elif args.command in {
+        "build-corporate-action-candidate-manifest-v321",
+        "select-market-adjustment-candidates-v321",
+        "acquire-missing-corporate-action-documents-v321",
+        "parse-corporate-action-documents-v321",
+        "review-complex-corporate-actions-v321",
+    }:
+        from src.cli.corporate_action_document_commands import run_corporate_action_document_command
+
+        run_corporate_action_document_command(settings, args)
+    elif args.command in {
+        "audit-listed-spinoff-valuation-v321",
+        "build-spinoff-distribution-ledger-v321",
+        "audit-spinoff-fractional-settlement-v321",
+        "audit-spinoff-evidence-completeness-v321",
+        "build-complex-action-coverage-gate-v321",
+    }:
+        from src.cli.spinoff_commands import run_spinoff_command
+
+        run_spinoff_command(args)
     elif args.command == "prioritize-current-resolution-backlog-v321":
         try:
             result = prioritize_current_resolution_backlog_v321(
