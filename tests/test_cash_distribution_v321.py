@@ -120,8 +120,8 @@ def test_cash_amount_crosscheck_detects_match(tmp_path):
     assert result["mismatches"] == 0
 
 
-def test_main_namespace_contains_phase58_functions():
-    m=importlib.import_module("src.main")
+def test_dividend_cli_namespace_contains_phase58_functions():
+    m=importlib.import_module("src.cli.dividend_commands")
     for name in [
         "build_stock_cash_amount_candidates_v321",
         "prepare_official_cash_event_template_v321",

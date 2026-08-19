@@ -53,8 +53,8 @@ def test_exdate_queue_keeps_ambiguity(tmp_path):
     assert result["status_counts"]["AMBIGUOUS_DECISION_DISCLOSURES:2"]==1
 
 
-def test_main_namespace_contains_phase512_functions():
-    m=importlib.import_module("src.main")
+def test_dividend_cli_namespace_contains_phase512_functions():
+    m=importlib.import_module("src.cli.dividend_commands")
     for name in [
         "rank_and_probe_kodex_endpoints_v321",
         "acquire_stock_dividend_decision_disclosures_v321",

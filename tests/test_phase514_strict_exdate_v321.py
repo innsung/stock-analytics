@@ -93,8 +93,8 @@ def test_export_benchmark_calendar_from_db(tmp_path):
     assert result["last_date"]=="20260709"
 
 
-def test_main_namespace_contains_phase514_functions():
-    m=importlib.import_module("src.main")
+def test_dividend_cli_namespace_contains_phase514_functions():
+    m=importlib.import_module("src.cli.dividend_commands")
     for name in [
         "build_explicit_stock_exdate_strict_evidence_v321",
         "build_record_date_calendar_candidates_v321",

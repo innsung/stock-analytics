@@ -86,8 +86,8 @@ def test_extract_dart_record_date_unique(tmp_path):
     assert out.iloc[0]["candidate_date"]=="20221231"
 
 
-def test_main_namespace_contains_phase513_functions():
-    m=importlib.import_module("src.main")
+def test_dividend_cli_namespace_contains_phase513_functions():
+    m=importlib.import_module("src.cli.dividend_commands")
     for name in [
         "inspect_kodex_probe_responses_v321",
         "extract_dart_dividend_record_dates_v321",

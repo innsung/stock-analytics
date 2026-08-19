@@ -120,8 +120,8 @@ def test_stock_dividend_summary(tmp_path):
     assert result["status_counts"]["NO_AMOUNT_CANDIDATE"] == 1
 
 
-def test_main_namespace_contains_phase59_functions():
-    m = importlib.import_module("src.main")
+def test_dividend_cli_namespace_contains_phase59_functions():
+    m = importlib.import_module("src.cli.dividend_commands")
     for name in [
         "prepare_benchmark_etf_distribution_template_v321",
         "validate_benchmark_etf_distributions_v321",

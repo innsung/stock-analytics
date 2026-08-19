@@ -25,7 +25,7 @@ def test_stock_dividend_ambiguity_report(tmp_path):
     assert result["ambiguous"]==1
     assert result["missing"]==1
 
-def test_main_namespace_contains_phase510_functions():
-    m=importlib.import_module("src.main")
+def test_dividend_cli_namespace_contains_phase510_functions():
+    m=importlib.import_module("src.cli.dividend_commands")
     assert hasattr(m,"acquire_kodex_distribution_candidates_v321")
     assert hasattr(m,"build_stock_dividend_ambiguity_report_v321")

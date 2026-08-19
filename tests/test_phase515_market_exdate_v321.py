@@ -97,8 +97,8 @@ def test_kodex_summary(tmp_path):
     assert result["responses_with_date_fields"]==0
 
 
-def test_main_namespace_contains_phase515_functions():
-    m=importlib.import_module("src.main")
+def test_dividend_cli_namespace_contains_phase515_functions():
+    m=importlib.import_module("src.cli.dividend_commands")
     for name in [
         "build_market_exdate_verification_queue_v321",
         "validate_official_market_exdates_v321",

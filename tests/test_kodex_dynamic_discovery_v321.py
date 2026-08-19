@@ -70,7 +70,7 @@ def test_refine_keeps_within_year_ambiguity(tmp_path):
     assert "AMBIGUOUS_WITHIN_BUSINESS_YEAR:2" in result["status_counts"]
 
 
-def test_main_namespace_contains_phase511_functions():
-    m=importlib.import_module("src.main")
+def test_dividend_cli_namespace_contains_phase511_functions():
+    m=importlib.import_module("src.cli.dividend_commands")
     assert hasattr(m,"discover_kodex_dynamic_endpoints_v321")
     assert hasattr(m,"refine_stock_dividend_candidates_v321")
