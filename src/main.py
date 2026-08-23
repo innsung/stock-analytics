@@ -25,9 +25,6 @@ from src.ml.phase532_recent_dividend_acquisition_manifest_v321 import build_rece
 from src.ml.phase536_company_name_recovery_v321 import recover_acquisition_company_names_v321
 from src.ml.phase542_market_notice_coverage_audit_v321 import audit_market_notice_coverage_v321
 from src.ml.phase543_recent_corporate_action_classifier_v321 import classify_recent_corporate_actions_v321
-from src.ml.phase620_kakao_split_amendments_v321 import audit_kakao_split_amendments_v321
-from src.ml.phase621_historical_amendment_duplicates_v321 import audit_historical_amendment_duplicates_v321
-from src.ml.phase622_ecoprobm_rights_support_disclosures_v321 import audit_ecoprobm_rights_support_disclosures_v321
 from src.ml.phase623_ecoprobm_bonus_issue_verification_v321 import verify_ecoprobm_bonus_issue_v321
 from src.ml.phase624_hd_ksoe_third_party_capital_v321 import audit_hd_ksoe_third_party_capital_v321
 from src.ml.phase625_shinhan_neoplux_share_exchange_v321 import audit_shinhan_neoplux_share_exchange_v321
@@ -1454,21 +1451,14 @@ def main() -> None:
         from src.cli.amendment_followup_commands import run_amendment_followup_command
 
         run_amendment_followup_command(args)
-    elif args.command == "audit-kakao-split-amendments-v321":
-        try:
-            result=audit_kakao_split_amendments_v321(actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,phase590_audit_csv=args.phase590_audit_csv,phase616_audit_csv=args.phase616_audit_csv,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError) as exc:raise SystemExit(f"[V3.2.1 Phase 6.20] {exc}")
-        print("[V3.2.1 Phase 6.20 Kakao Split Amendments]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-historical-amendment-duplicates-v321":
-        try:
-            result=audit_historical_amendment_duplicates_v321(actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,chain_csv=args.chain_csv,verification_csv=args.verification_csv,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError) as exc:raise SystemExit(f"[V3.2.1 Phase 6.21] {exc}")
-        print("[V3.2.1 Phase 6.21 Historical Amendment Duplicates]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-ecoprobm-rights-support-disclosures-v321":
-        try:
-            result=audit_ecoprobm_rights_support_disclosures_v321(actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,phase618_audit_csv=args.phase618_audit_csv,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError) as exc:raise SystemExit(f"[V3.2.1 Phase 6.22] {exc}")
-        print("[V3.2.1 Phase 6.22 Ecopro BM Rights Support Disclosures]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
+    elif args.command in {
+        "audit-kakao-split-amendments-v321",
+        "audit-historical-amendment-duplicates-v321",
+        "audit-ecoprobm-rights-support-disclosures-v321",
+    }:
+        from src.cli.amendment_crosscheck_commands import run_amendment_crosscheck_command
+
+        run_amendment_crosscheck_command(args)
     elif args.command == "verify-ecoprobm-bonus-issue-v321":
         try:
             settings=get_settings();result=verify_ecoprobm_bonus_issue_v321(DartClient(settings.dart_api_key),actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,trading_calendar_db=args.trading_calendar_db,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
