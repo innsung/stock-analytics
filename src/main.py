@@ -25,10 +25,6 @@ from src.ml.phase532_recent_dividend_acquisition_manifest_v321 import build_rece
 from src.ml.phase536_company_name_recovery_v321 import recover_acquisition_company_names_v321
 from src.ml.phase542_market_notice_coverage_audit_v321 import audit_market_notice_coverage_v321
 from src.ml.phase543_recent_corporate_action_classifier_v321 import classify_recent_corporate_actions_v321
-from src.ml.phase590_merger_spinoff_applicability_v321 import audit_historical_merger_spinoff_applicability_v321
-from src.ml.phase591_celltrion_merger_reparse_v321 import reparse_celltrion_merger_v321
-from src.ml.phase592_capital_reduction_applicability_v321 import audit_historical_capital_reductions_v321
-from src.ml.phase593_incomplete_primary_applicability_v321 import audit_incomplete_primary_adjustments_v321
 from src.ml.phase594_samsung_heavy_rights_verification_v321 import verify_samsung_heavy_rights_v321
 from src.ml.phase595_amorepacific_restructuring_v321 import audit_amorepacific_restructuring_v321
 from src.ml.phase596_overseas_listing_delisting_v321 import audit_overseas_listing_delistings_v321
@@ -1655,61 +1651,15 @@ def main() -> None:
         from src.cli.release_commands import run_release_command
 
         run_release_command(args)
-    elif args.command == "audit-incomplete-primary-adjustments-v321":
-        try:
-            result=audit_incomplete_primary_adjustments_v321(
-                terms_csv=args.terms_csv,execution_manifest_csv=args.execution_manifest_csv,
-                documents_dir=args.documents_dir,trading_calendar_db=args.trading_calendar_db,
-                evidence_output_csv=args.evidence_output_csv,review_output_csv=args.review_output_csv,
-                audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.93] {exc}")
-        print("[V3.2.1 Phase 5.93 Incomplete Primary Applicability]")
-        print(f"Targets: {result['target_rows']:,}")
-        print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}")
-        print(f"Direct reparse: {result['direct_reparse_rows']:,}")
-        print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-historical-capital-reductions-v321":
-        try:
-            result=audit_historical_capital_reductions_v321(
-                terms_csv=args.terms_csv,execution_manifest_csv=args.execution_manifest_csv,
-                documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,
-                audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.92] {exc}")
-        print("[V3.2.1 Phase 5.92 Capital Reduction Applicability]")
-        print(f"Targets: {result['target_rows']:,}")
-        print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}")
-        print(f"Listed reduction review: {result['listed_reduction_review_rows']:,}")
-        print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "reparse-celltrion-merger-v321":
-        try:
-            result=reparse_celltrion_merger_v321(
-                PykrxMarketAdjustmentProvider(),applicability_audit_csv=args.applicability_audit_csv,
-                terms_csv=args.terms_csv,official_candidates_csv=args.official_candidates_csv,
-                evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,
-                summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.91] {exc}")
-        print("[V3.2.1 Phase 5.91 Celltrion Merger Reparse]")
-        print(f"Targets: {result['target_rows']:,}")
-        print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}")
-        print(f"Unresolved: {result['unresolved_rows']:,}")
-        print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-historical-merger-spinoff-applicability-v321":
-        try:
-            result=audit_historical_merger_spinoff_applicability_v321(
-                terms_csv=args.terms_csv,execution_manifest_csv=args.execution_manifest_csv,
-                documents_dir=args.documents_dir,trading_calendar_db=args.trading_calendar_db,
-                evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,
-                summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.90] {exc}")
-        print("[V3.2.1 Phase 5.90 Merger/Spinoff Applicability]")
-        print(f"Targets: {result['target_rows']:,}")
-        print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}")
-        print(f"Material or reparse: {result['material_or_reparse_rows']:,}")
-        print(f"Output: {result['evidence_output_csv']}")
+    elif args.command in {
+        "audit-historical-merger-spinoff-applicability-v321",
+        "reparse-celltrion-merger-v321",
+        "audit-historical-capital-reductions-v321",
+        "audit-incomplete-primary-adjustments-v321",
+    }:
+        from src.cli.adjustment_applicability_commands import run_adjustment_applicability_command
+
+        run_adjustment_applicability_command(args)
     elif args.command == "audit-historical-rights-applicability-v321":
         from src.cli.primary_adjustment_commands import run_primary_adjustment_command
 
