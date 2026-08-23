@@ -13,6 +13,7 @@ from src.cli.command_dispatcher import (
     PROCESSING_RUNNER_SPECS,
     REGISTRY_INVOCATIONS,
     CommandRequirements,
+    RunnerResolutionError,
     RunnerSpec,
     TERMINAL_COMMAND_GROUPS,
     TERMINAL_RUNNER_SPECS,
@@ -218,6 +219,30 @@ def test_all_runner_entrypoints_resolve_and_are_cached():
     assert cached == resolved
     assert first_pass.misses == len(set(specs))
     assert second_pass.hits - first_pass.hits == len(specs)
+
+
+def test_runner_resolution_errors_identify_broken_spec(monkeypatch):
+    missing_module = RunnerSpec("src.cli.missing_commands", "run_missing_command", "args")
+    monkeypatch.setattr(
+        dispatcher,
+        "import_module",
+        lambda _name: (_ for _ in ()).throw(ModuleNotFoundError("missing")),
+    )
+    with pytest.raises(RunnerResolutionError, match="Cannot import runner module"):
+        _load_runner(missing_module)
+
+    monkeypatch.setattr(dispatcher, "import_module", lambda _name: SimpleNamespace(not_runner=1))
+    missing_function = RunnerSpec("src.cli.fake_commands", "run_fake_command", "args")
+    with pytest.raises(RunnerResolutionError, match="Runner run_fake_command not found"):
+        _load_runner(missing_function)
+
+    monkeypatch.setattr(
+        dispatcher,
+        "import_module",
+        lambda _name: SimpleNamespace(run_fake_command="not callable"),
+    )
+    with pytest.raises(RunnerResolutionError, match="is not callable"):
+        _load_runner(missing_function)
 
 
 def test_registry_invocation_contracts_are_read_only_and_enforced():

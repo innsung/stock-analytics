@@ -32,6 +32,10 @@ class CommandRequirements(NamedTuple):
     database: bool
 
 
+class RunnerResolutionError(RuntimeError):
+    """Raised when a configured command runner cannot be loaded."""
+
+
 VALID_INVOCATIONS = frozenset(Invocation.__args__)
 REGISTRY_INVOCATIONS = MappingProxyType({
     "foundation": frozenset({"runtime", "event", "conn_settings"}),
@@ -260,7 +264,23 @@ RUNNER_SPECS_BY_REGISTRY = MappingProxyType({
 
 @lru_cache(maxsize=None)
 def _load_runner(spec: RunnerSpec) -> tuple[Callable, Invocation]:
-    return getattr(import_module(spec.module_name), spec.runner_name), spec.invocation
+    try:
+        module = import_module(spec.module_name)
+    except ImportError as exc:
+        raise RunnerResolutionError(
+            f"Cannot import runner module {spec.module_name}"
+        ) from exc
+    try:
+        runner = getattr(module, spec.runner_name)
+    except AttributeError as exc:
+        raise RunnerResolutionError(
+            f"Runner {spec.runner_name} not found in {spec.module_name}"
+        ) from exc
+    if not callable(runner):
+        raise RunnerResolutionError(
+            f"Runner {spec.module_name}.{spec.runner_name} is not callable"
+        )
+    return runner, spec.invocation
 
 
 def _dispatch_from_spec(group, specs, settings, args) -> bool:
