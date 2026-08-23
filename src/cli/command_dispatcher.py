@@ -25,6 +25,13 @@ class RunnerSpec(NamedTuple):
 
 
 VALID_INVOCATIONS = frozenset(Invocation.__args__)
+REGISTRY_INVOCATIONS = MappingProxyType({
+    "foundation": frozenset({"runtime", "event", "conn_settings"}),
+    "audit": frozenset({"args", "settings"}),
+    "workflow": frozenset({"args", "settings"}),
+    "processing": frozenset({"args", "settings"}),
+    "terminal": frozenset({"args", "conn_settings", "collection", "portfolio", "conn_args"}),
+})
 
 
 def _validate_runner_specs(
@@ -38,6 +45,10 @@ def _validate_runner_specs(
             raise ValueError(f"Incomplete runner spec in {registry_name}: {group}")
         if spec.invocation not in VALID_INVOCATIONS:
             raise ValueError(f"Unsupported invocation in {registry_name}: {group}={spec.invocation}")
+        if spec.invocation not in REGISTRY_INVOCATIONS[registry_name]:
+            raise ValueError(
+                f"Invocation not allowed in {registry_name}: {group}={spec.invocation}"
+            )
         specs[group] = spec
     return MappingProxyType(specs)
 

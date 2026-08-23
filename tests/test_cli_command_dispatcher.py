@@ -8,12 +8,14 @@ from src.cli.command_dispatcher import (
     FOUNDATION_RUNNER_SPECS,
     PROCESSING_COMMAND_GROUPS,
     PROCESSING_RUNNER_SPECS,
+    REGISTRY_INVOCATIONS,
     RunnerSpec,
     TERMINAL_COMMAND_GROUPS,
     TERMINAL_RUNNER_SPECS,
     WORKFLOW_COMMAND_GROUPS,
     WORKFLOW_RUNNER_SPECS,
     _load_runner,
+    _validate_runner_specs,
     audit_command_group,
     command_group,
     processing_command_group,
@@ -169,3 +171,14 @@ def test_all_runner_entrypoints_resolve_and_are_cached():
     assert cached == resolved
     assert first_pass.misses == len(set(specs))
     assert second_pass.hits - first_pass.hits == len(specs)
+
+
+def test_registry_invocation_contracts_are_read_only_and_enforced():
+    with pytest.raises(TypeError):
+        REGISTRY_INVOCATIONS["audit"] = frozenset({"runtime"})
+
+    with pytest.raises(ValueError, match="Invocation not allowed in audit"):
+        _validate_runner_specs(
+            {"broken": ("src.cli.runtime_commands", "run_runtime_command", "runtime")},
+            "audit",
+        )
