@@ -253,35 +253,9 @@ def main() -> None:
     from src.cli.core_parsers import register_core_parsers
 
     register_core_parsers(sub)
-    p = sub.add_parser("external-verify"); p.add_argument("codes", nargs="+")
-    p.add_argument("--days", type=int, default=1825)
-    p.add_argument("--capital", type=float, default=10_000_000)
-    p.add_argument("--with-walk-forward", action="store_true")
-    p.add_argument("--skip-collect", action="store_true")
-    p.add_argument("--export-csv", default="multi_asset_results.csv")
-    p = sub.add_parser("collect-multi"); p.add_argument("codes", nargs="*"); p.add_argument("--universe-csv")
-    p.add_argument("--days", type=int, default=1825)
-    p = sub.add_parser("common-verify"); p.add_argument("codes", nargs="+")
-    p.add_argument("--industry", action="append", default=[], help="종목코드=업종")
-    p.add_argument("--capital", type=float, default=10_000_000)
-    p.add_argument("--output-prefix", default="common_multi_asset")
-    p = sub.add_parser("portfolio-verify"); p.add_argument("codes", nargs="+")
-    p.add_argument("--benchmark-code", default="069500")
-    p.add_argument("--industry", action="append", default=[], help="종목코드=업종")
-    p.add_argument("--capital", type=float, default=100_000_000)
-    p.add_argument("--rebalance", choices=["monthly", "quarterly"], default="monthly")
-    p.add_argument("--stock-cap", type=float, default=.20)
-    p.add_argument("--sector-cap", type=float, default=.35)
-    p.add_argument("--lockbox-months", type=int, default=12)
-    p.add_argument("--output-prefix", default="realistic_portfolio")
-    p = sub.add_parser("collect-valuation"); p.add_argument("codes", nargs="*"); p.add_argument("--universe-csv")
-    p = sub.add_parser("collect-financial-series"); p.add_argument("codes", nargs="*"); p.add_argument("--universe-csv")
-    p.add_argument("--start-year", type=int, required=True); p.add_argument("--end-year", type=int, required=True)
-    p = sub.add_parser("rank-universe"); p.add_argument("codes", nargs="*"); p.add_argument("--universe-csv")
-    p.add_argument("--benchmark-code", default="069500")
-    p.add_argument("--industry", action="append", default=[])
-    p.add_argument("--export-csv", default="daily_ranking.csv")
-    p.add_argument("--min-liquidity", type=float, default=1_000_000_000)
+    from src.cli.portfolio_parsers import register_portfolio_parsers
+
+    register_portfolio_parsers(sub)
     from src.cli.shadow_parsers import register_shadow_parsers
 
     register_shadow_parsers(sub)
