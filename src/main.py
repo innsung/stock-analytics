@@ -1,5 +1,4 @@
-import atexit
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from datetime import datetime, timezone
 import hashlib
 import os
@@ -246,26 +245,28 @@ def execute_daily_shadow(conn, settings, args) -> None:
         raise
 
 
+def run_command(args) -> None:
+    settings = get_settings()
+    from src.cli.command_dispatcher import dispatch_command
+
+    with closing(connect(settings.db_path)) as conn:
+        dispatch_command(
+            conn,
+            settings,
+            args,
+            resolve_codes=resolve_codes_and_industries,
+            print_shadow_report=print_shadow_report,
+            execute_daily_shadow=execute_daily_shadow,
+            load_universe=load_universe_csv,
+            save_shadow_outputs=save_shadow_outputs,
+            print_shadow_result=print_shadow_result,
+        )
+
+
 def main() -> None:
     from src.cli.parser_registry import build_parser
 
-    args = build_parser().parse_args()
-    settings = get_settings()
-    conn = connect(settings.db_path)
-    atexit.register(conn.close)
-    from src.cli.command_dispatcher import dispatch_command
-
-    dispatch_command(
-        conn,
-        settings,
-        args,
-        resolve_codes=resolve_codes_and_industries,
-        print_shadow_report=print_shadow_report,
-        execute_daily_shadow=execute_daily_shadow,
-        load_universe=load_universe_csv,
-        save_shadow_outputs=save_shadow_outputs,
-        print_shadow_result=print_shadow_result,
-    )
+    run_command(build_parser().parse_args())
 
 if __name__ == "__main__":
     main()
