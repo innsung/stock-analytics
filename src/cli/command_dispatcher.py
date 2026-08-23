@@ -279,6 +279,10 @@ def terminal_command_group(command: str) -> str | None:
     return TERMINAL_COMMAND_INDEX.get(command)
 
 
+def command_route(command: str) -> tuple[str, str] | None:
+    return ALL_COMMAND_INDEX.get(command)
+
+
 def dispatch_foundation_command(
     conn,
     settings,
@@ -288,8 +292,9 @@ def dispatch_foundation_command(
     print_shadow_report,
     execute_daily_shadow,
     load_universe,
+    group=None,
 ) -> bool:
-    group = command_group(args.command)
+    group = group or command_group(args.command)
     if group is None:
         return False
     runner, invocation = _load_runner(FOUNDATION_RUNNER_SPECS[group])
@@ -305,16 +310,16 @@ def dispatch_foundation_command(
     return True
 
 
-def dispatch_audit_command(settings, args) -> bool:
-    return _dispatch_from_spec(audit_command_group(args.command), AUDIT_RUNNER_SPECS, settings, args)
+def dispatch_audit_command(settings, args, *, group=None) -> bool:
+    return _dispatch_from_spec(group or audit_command_group(args.command), AUDIT_RUNNER_SPECS, settings, args)
 
 
-def dispatch_workflow_command(settings, args) -> bool:
-    return _dispatch_from_spec(workflow_command_group(args.command), WORKFLOW_RUNNER_SPECS, settings, args)
+def dispatch_workflow_command(settings, args, *, group=None) -> bool:
+    return _dispatch_from_spec(group or workflow_command_group(args.command), WORKFLOW_RUNNER_SPECS, settings, args)
 
 
-def dispatch_processing_command(settings, args) -> bool:
-    return _dispatch_from_spec(processing_command_group(args.command), PROCESSING_RUNNER_SPECS, settings, args)
+def dispatch_processing_command(settings, args, *, group=None) -> bool:
+    return _dispatch_from_spec(group or processing_command_group(args.command), PROCESSING_RUNNER_SPECS, settings, args)
 
 def dispatch_terminal_command(
     conn,
@@ -324,8 +329,9 @@ def dispatch_terminal_command(
     resolve_codes,
     save_shadow_outputs,
     print_shadow_result,
+    group=None,
 ) -> None:
-    group = terminal_command_group(args.command)
+    group = group or terminal_command_group(args.command)
     if group is None:
         raise ValueError(f"Unsupported command: {args.command}")
     runner, invocation = _load_runner(TERMINAL_RUNNER_SPECS[group])
@@ -342,3 +348,49 @@ def dispatch_terminal_command(
         )
     else:
         runner(conn, args)
+
+
+def dispatch_command(
+    conn,
+    settings,
+    args,
+    *,
+    resolve_codes,
+    print_shadow_report,
+    execute_daily_shadow,
+    load_universe,
+    save_shadow_outputs,
+    print_shadow_result,
+) -> None:
+    route = command_route(args.command)
+    if route is None:
+        raise ValueError(f"Unsupported command: {args.command}")
+
+    registry, group = route
+    if registry == "foundation":
+        dispatch_foundation_command(
+            conn,
+            settings,
+            args,
+            resolve_codes=resolve_codes,
+            print_shadow_report=print_shadow_report,
+            execute_daily_shadow=execute_daily_shadow,
+            load_universe=load_universe,
+            group=group,
+        )
+    elif registry == "audit":
+        dispatch_audit_command(settings, args, group=group)
+    elif registry == "workflow":
+        dispatch_workflow_command(settings, args, group=group)
+    elif registry == "processing":
+        dispatch_processing_command(settings, args, group=group)
+    else:
+        dispatch_terminal_command(
+            conn,
+            settings,
+            args,
+            resolve_codes=resolve_codes,
+            save_shadow_outputs=save_shadow_outputs,
+            print_shadow_result=print_shadow_result,
+            group=group,
+        )

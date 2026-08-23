@@ -1,5 +1,8 @@
+from types import SimpleNamespace
+
 import pytest
 
+import src.cli.command_dispatcher as dispatcher
 from src.cli.command_dispatcher import (
     AUDIT_COMMAND_GROUPS,
     AUDIT_RUNNER_SPECS,
@@ -18,6 +21,7 @@ from src.cli.command_dispatcher import (
     _validate_runner_specs,
     audit_command_group,
     command_group,
+    command_route,
     processing_command_group,
     terminal_command_group,
     workflow_command_group,
@@ -102,6 +106,9 @@ def test_all_dispatch_registries_are_globally_unique_and_complete():
     assert len(set(commands)) == 179
     assert ALL_COMMAND_INDEX["build-total-return-v321"] == ("foundation", "event")
     assert ALL_COMMAND_INDEX["backtest"] == ("terminal", "core")
+    assert command_route("build-total-return-v321") == ("foundation", "event")
+    assert command_route("backtest") == ("terminal", "core")
+    assert command_route("unknown-command") is None
 
 
 def test_data_driven_runner_specs_cover_every_non_terminal_group():
@@ -182,3 +189,37 @@ def test_registry_invocation_contracts_are_read_only_and_enforced():
             {"broken": ("src.cli.runtime_commands", "run_runtime_command", "runtime")},
             "audit",
         )
+
+
+@pytest.mark.parametrize(
+    ("command", "expected"),
+    (
+        ("daily-shadow", "foundation"),
+        ("audit-kakao-zero-ratio-merger-v321", "audit"),
+        ("build-final-release-bundle-v321", "workflow"),
+        ("route-historical-backlog-v321", "processing"),
+        ("backtest", "terminal"),
+    ),
+)
+def test_unified_dispatch_uses_global_command_route(monkeypatch, command, expected):
+    calls = []
+    for registry in ("foundation", "audit", "workflow", "processing", "terminal"):
+        monkeypatch.setattr(
+            dispatcher,
+            f"dispatch_{registry}_command",
+            lambda *args, _registry=registry, **kwargs: calls.append(_registry),
+        )
+
+    dispatcher.dispatch_command(
+        None,
+        None,
+        SimpleNamespace(command=command),
+        resolve_codes=None,
+        print_shadow_report=None,
+        execute_daily_shadow=None,
+        load_universe=None,
+        save_shadow_outputs=None,
+        print_shadow_result=None,
+    )
+
+    assert calls == [expected]

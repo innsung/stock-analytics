@@ -332,15 +332,9 @@ def main() -> None:
     settings = get_settings()
     conn = connect(settings.db_path)
     atexit.register(conn.close)
-    from src.cli.command_dispatcher import (
-        dispatch_audit_command,
-        dispatch_foundation_command,
-        dispatch_processing_command,
-        dispatch_terminal_command,
-        dispatch_workflow_command,
-    )
+    from src.cli.command_dispatcher import dispatch_command
 
-    if dispatch_foundation_command(
+    dispatch_command(
         conn,
         settings,
         args,
@@ -348,23 +342,9 @@ def main() -> None:
         print_shadow_report=print_shadow_report,
         execute_daily_shadow=execute_daily_shadow,
         load_universe=load_universe_csv,
-    ):
-        pass
-    elif dispatch_audit_command(settings, args):
-        pass
-    elif dispatch_workflow_command(settings, args):
-        pass
-    elif dispatch_processing_command(settings, args):
-        pass
-    else:
-        dispatch_terminal_command(
-            conn,
-            settings,
-            args,
-            resolve_codes=resolve_codes_and_industries,
-            save_shadow_outputs=save_shadow_outputs,
-            print_shadow_result=print_shadow_result,
-        )
+        save_shadow_outputs=save_shadow_outputs,
+        print_shadow_result=print_shadow_result,
+    )
 
 if __name__ == "__main__":
     main()
