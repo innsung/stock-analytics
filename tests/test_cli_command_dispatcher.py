@@ -13,6 +13,7 @@ from src.cli.command_dispatcher import (
     TERMINAL_RUNNER_SPECS,
     WORKFLOW_COMMAND_GROUPS,
     WORKFLOW_RUNNER_SPECS,
+    _load_runner,
     audit_command_group,
     command_group,
     processing_command_group,
@@ -146,3 +147,25 @@ def test_dispatch_indexes_and_runner_specs_are_read_only():
         TERMINAL_RUNNER_SPECS["core"] = RunnerSpec(
             "src.cli.core_commands", "run_core_command", "conn_args"
         )
+
+
+def test_all_runner_entrypoints_resolve_and_are_cached():
+    registries = (
+        FOUNDATION_RUNNER_SPECS,
+        AUDIT_RUNNER_SPECS,
+        WORKFLOW_RUNNER_SPECS,
+        PROCESSING_RUNNER_SPECS,
+        TERMINAL_RUNNER_SPECS,
+    )
+    specs = [spec for registry in registries for spec in registry.values()]
+
+    _load_runner.cache_clear()
+    resolved = [_load_runner(spec) for spec in specs]
+    first_pass = _load_runner.cache_info()
+    cached = [_load_runner(spec) for spec in specs]
+    second_pass = _load_runner.cache_info()
+
+    assert all(callable(runner) for runner, _ in resolved)
+    assert cached == resolved
+    assert first_pass.misses == len(set(specs))
+    assert second_pass.hits - first_pass.hits == len(specs)

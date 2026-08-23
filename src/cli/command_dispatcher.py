@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from importlib import import_module
 from types import MappingProxyType
-from typing import Literal, Mapping, NamedTuple
+from typing import Callable, Literal, Mapping, NamedTuple
 
 
 Invocation = Literal[
@@ -231,7 +232,8 @@ PROCESSING_RUNNER_SPECS = _validate_runner_specs(PROCESSING_RUNNER_SPECS, "proce
 TERMINAL_RUNNER_SPECS = _validate_runner_specs(TERMINAL_RUNNER_SPECS, "terminal")
 
 
-def _load_runner(spec):
+@lru_cache(maxsize=None)
+def _load_runner(spec: RunnerSpec) -> tuple[Callable, Invocation]:
     return getattr(import_module(spec.module_name), spec.runner_name), spec.invocation
 
 
