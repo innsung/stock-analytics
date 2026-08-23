@@ -25,9 +25,6 @@ from src.ml.phase532_recent_dividend_acquisition_manifest_v321 import build_rece
 from src.ml.phase536_company_name_recovery_v321 import recover_acquisition_company_names_v321
 from src.ml.phase542_market_notice_coverage_audit_v321 import audit_market_notice_coverage_v321
 from src.ml.phase543_recent_corporate_action_classifier_v321 import classify_recent_corporate_actions_v321
-from src.ml.phase623_ecoprobm_bonus_issue_verification_v321 import verify_ecoprobm_bonus_issue_v321
-from src.ml.phase624_hd_ksoe_third_party_capital_v321 import audit_hd_ksoe_third_party_capital_v321
-from src.ml.phase625_shinhan_neoplux_share_exchange_v321 import audit_shinhan_neoplux_share_exchange_v321
 from src.shadow.engine import run_shadow_day
 
 
@@ -1459,21 +1456,14 @@ def main() -> None:
         from src.cli.amendment_crosscheck_commands import run_amendment_crosscheck_command
 
         run_amendment_crosscheck_command(args)
-    elif args.command == "verify-ecoprobm-bonus-issue-v321":
-        try:
-            settings=get_settings();result=verify_ecoprobm_bonus_issue_v321(DartClient(settings.dart_api_key),actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,trading_calendar_db=args.trading_calendar_db,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:raise SystemExit(f"[V3.2.1 Phase 6.23] {exc}")
-        print("[V3.2.1 Phase 6.23 Ecopro BM Bonus Issue]");print(f"Targets: {result['target_rows']:,}");print(f"Strict evidence: {result['strict_evidence_rows']:,}");print(f"Effective date: {result['effective_date']}");print(f"Adjustment factor: {result['adjustment_factor']}");print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-hd-ksoe-third-party-capital-v321":
-        try:
-            settings=get_settings();result=audit_hd_ksoe_third_party_capital_v321(DartClient(settings.dart_api_key),actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:raise SystemExit(f"[V3.2.1 Phase 6.24] {exc}")
-        print("[V3.2.1 Phase 6.24 HD KSOE Third-party Capital]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-shinhan-neoplux-share-exchange-v321":
-        try:
-            settings=get_settings();result=audit_shinhan_neoplux_share_exchange_v321(DartClient(settings.dart_api_key),actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,phase621_audit_csv=args.phase621_audit_csv,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:raise SystemExit(f"[V3.2.1 Phase 6.25] {exc}")
-        print("[V3.2.1 Phase 6.25 Shinhan-Neoplux Share Exchange]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
+    elif args.command in {
+        "verify-ecoprobm-bonus-issue-v321",
+        "audit-hd-ksoe-third-party-capital-v321",
+        "audit-shinhan-neoplux-share-exchange-v321",
+    }:
+        from src.cli.final_company_audit_commands import run_final_company_audit_command
+
+        run_final_company_audit_command(settings, args)
     elif args.command in {
         "build-release-quality-gate-v321",
         "verify-release-artifact-integrity-v321",
