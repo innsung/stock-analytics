@@ -34,9 +34,26 @@ COMMAND_GROUPS = {
     }),
 }
 
+AUDIT_COMMAND_GROUPS = {
+    "kind": frozenset({"crosscheck-kind-dividends-v321", "retry-kind-dividends-v321"}),
+    "company_adjustment": frozenset({"verify-samsung-heavy-rights-v321", "audit-amorepacific-restructuring-v321", "audit-overseas-listing-delistings-v321"}),
+    "company_applicability": frozenset({"audit-lgchem-subsidiary-rights-v321", "audit-hdhyundai-exchangeable-bond-v321", "audit-ecoprobm-merger-transfer-v321"}),
+    "merger_followup": frozenset({"audit-kakao-zero-ratio-merger-v321", "audit-celltrion-merger-followups-v321", "audit-kakao-overseas-dr-delisting-v321", "audit-samsung-heavy-preferred-delisting-warnings-v321"}),
+    "subsidiary_audit": frozenset({"audit-hd-ksoe-subsidiary-zero-ratio-merger-v321", "audit-ecoprobm-subsidiary-capital-increases-v321", "audit-lgchem-historical-subsidiary-capital-v321", "audit-amorepacific-us-subsidiary-capital-v321", "audit-skhynix-subsidiary-capital-v321", "audit-cj-schwans-subsidiary-mergers-v321", "audit-kakao-games-subsidiary-capital-v321"}),
+    "market_followup_audit": frozenset({"audit-naver-line-overseas-delisting-v321", "audit-historical-administrative-trading-halts-v321", "audit-related-party-rights-participation-v321"}),
+    "completion_followup": frozenset({"audit-samsung-heavy-rights-price-followups-v321", "audit-asset-transfer-completion-reports-v321", "audit-physical-split-business-transfer-completions-v321"}),
+    "amendment_followup": frozenset({"audit-amorepacific-attachment-followups-v321", "audit-rights-offering-followups-v321", "audit-hdhyundai-subsidiary-rights-amendments-v321"}),
+    "amendment_crosscheck": frozenset({"audit-kakao-split-amendments-v321", "audit-historical-amendment-duplicates-v321", "audit-ecoprobm-rights-support-disclosures-v321"}),
+    "final_company_audit": frozenset({"verify-ecoprobm-bonus-issue-v321", "audit-hd-ksoe-third-party-capital-v321", "audit-shinhan-neoplux-share-exchange-v321"}),
+}
+
 
 def command_group(command: str) -> str | None:
     return next((group for group, commands in COMMAND_GROUPS.items() if command in commands), None)
+
+
+def audit_command_group(command: str) -> str | None:
+    return next((group for group, commands in AUDIT_COMMAND_GROUPS.items() if command in commands), None)
 
 
 def dispatch_foundation_command(
@@ -69,6 +86,43 @@ def dispatch_foundation_command(
         from src.cli.dividend_commands import run_dividend_command
 
         run_dividend_command(conn, settings, args)
+    else:
+        return False
+    return True
+
+
+def dispatch_audit_command(settings, args) -> bool:
+    group = audit_command_group(args.command)
+    if group == "kind":
+        from src.cli.kind_commands import run_kind_command
+        run_kind_command(args)
+    elif group == "company_adjustment":
+        from src.cli.company_adjustment_commands import run_company_adjustment_command
+        run_company_adjustment_command(settings, args)
+    elif group == "company_applicability":
+        from src.cli.company_applicability_commands import run_company_applicability_command
+        run_company_applicability_command(settings, args)
+    elif group == "merger_followup":
+        from src.cli.merger_followup_commands import run_merger_followup_command
+        run_merger_followup_command(settings, args)
+    elif group == "subsidiary_audit":
+        from src.cli.subsidiary_audit_commands import run_subsidiary_audit_command
+        run_subsidiary_audit_command(settings, args)
+    elif group == "market_followup_audit":
+        from src.cli.market_followup_audit_commands import run_market_followup_audit_command
+        run_market_followup_audit_command(settings, args)
+    elif group == "completion_followup":
+        from src.cli.completion_followup_commands import run_completion_followup_command
+        run_completion_followup_command(settings, args)
+    elif group == "amendment_followup":
+        from src.cli.amendment_followup_commands import run_amendment_followup_command
+        run_amendment_followup_command(args)
+    elif group == "amendment_crosscheck":
+        from src.cli.amendment_crosscheck_commands import run_amendment_crosscheck_command
+        run_amendment_crosscheck_command(args)
+    elif group == "final_company_audit":
+        from src.cli.final_company_audit_commands import run_final_company_audit_command
+        run_final_company_audit_command(settings, args)
     else:
         return False
     return True

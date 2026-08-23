@@ -1,4 +1,4 @@
-from src.cli.command_dispatcher import COMMAND_GROUPS, command_group
+from src.cli.command_dispatcher import AUDIT_COMMAND_GROUPS, COMMAND_GROUPS, audit_command_group, command_group
 
 
 def test_foundation_dispatch_registry_has_unique_commands():
@@ -14,3 +14,14 @@ def test_foundation_dispatch_registry_routes_representative_commands():
     assert command_group("build-total-return-v321") == "event"
     assert command_group("validate-official-market-exdates-v321") == "dividend"
     assert command_group("unknown-command") is None
+
+
+def test_audit_dispatch_registry_has_unique_commands_and_routes_groups():
+    commands = [command for group in AUDIT_COMMAND_GROUPS.values() for command in group]
+
+    assert len(commands) == 34
+    assert len(commands) == len(set(commands))
+    assert audit_command_group("retry-kind-dividends-v321") == "kind"
+    assert audit_command_group("audit-kakao-zero-ratio-merger-v321") == "merger_followup"
+    assert audit_command_group("audit-shinhan-neoplux-share-exchange-v321") == "final_company_audit"
+    assert audit_command_group("unknown-command") is None
