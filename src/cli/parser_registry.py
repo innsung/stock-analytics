@@ -11,6 +11,10 @@ class ParserSpec(NamedTuple):
     registrar_name: str
 
 
+class ParserResolutionError(RuntimeError):
+    """Raised when a configured parser registrar cannot be loaded."""
+
+
 PARSER_SPECS = tuple(
     ParserSpec(f"src.cli.{name}_parsers", f"register_{name}_parsers")
     for name in (
@@ -49,7 +53,23 @@ if len(PARSER_SPECS) != len(set(PARSER_SPECS)):
 
 @lru_cache(maxsize=None)
 def load_parser_registrar(spec: ParserSpec) -> Callable:
-    return getattr(import_module(spec.module_name), spec.registrar_name)
+    try:
+        module = import_module(spec.module_name)
+    except ImportError as exc:
+        raise ParserResolutionError(
+            f"Cannot import parser module {spec.module_name}"
+        ) from exc
+    try:
+        registrar = getattr(module, spec.registrar_name)
+    except AttributeError as exc:
+        raise ParserResolutionError(
+            f"Parser registrar {spec.registrar_name} not found in {spec.module_name}"
+        ) from exc
+    if not callable(registrar):
+        raise ParserResolutionError(
+            f"Parser registrar {spec.module_name}.{spec.registrar_name} is not callable"
+        )
+    return registrar
 
 
 def register_all_parsers(subparsers) -> None:
