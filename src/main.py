@@ -25,9 +25,6 @@ from src.ml.phase532_recent_dividend_acquisition_manifest_v321 import build_rece
 from src.ml.phase536_company_name_recovery_v321 import recover_acquisition_company_names_v321
 from src.ml.phase542_market_notice_coverage_audit_v321 import audit_market_notice_coverage_v321
 from src.ml.phase543_recent_corporate_action_classifier_v321 import classify_recent_corporate_actions_v321
-from src.ml.phase614_samsung_heavy_rights_price_followups_v321 import audit_samsung_heavy_rights_price_followups_v321
-from src.ml.phase615_asset_transfer_completion_reports_v321 import audit_asset_transfer_completion_reports_v321
-from src.ml.phase616_physical_split_business_transfer_completions_v321 import audit_physical_split_business_transfer_completions_v321
 from src.ml.phase617_amorepacific_attachment_followups_v321 import audit_amorepacific_attachment_followups_v321
 from src.ml.phase618_rights_offering_followups_v321 import audit_rights_offering_followups_v321
 from src.ml.phase619_hdhyundai_subsidiary_rights_amendments_v321 import audit_hdhyundai_subsidiary_rights_amendments_v321
@@ -1444,21 +1441,14 @@ def main() -> None:
         from src.cli.market_followup_audit_commands import run_market_followup_audit_command
 
         run_market_followup_audit_command(settings, args)
-    elif args.command == "audit-samsung-heavy-rights-price-followups-v321":
-        try:
-            settings=get_settings();result=audit_samsung_heavy_rights_price_followups_v321(DartClient(settings.dart_api_key),actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,phase594_audit_csv=args.phase594_audit_csv,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:raise SystemExit(f"[V3.2.1 Phase 6.14] {exc}")
-        print("[V3.2.1 Phase 6.14 Samsung Heavy Rights Price Follow-ups]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-asset-transfer-completion-reports-v321":
-        try:
-            settings=get_settings();result=audit_asset_transfer_completion_reports_v321(DartClient(settings.dart_api_key),actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:raise SystemExit(f"[V3.2.1 Phase 6.15] {exc}")
-        print("[V3.2.1 Phase 6.15 Asset-transfer Completion Reports]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-physical-split-business-transfer-completions-v321":
-        try:
-            settings=get_settings();result=audit_physical_split_business_transfer_completions_v321(DartClient(settings.dart_api_key),actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:raise SystemExit(f"[V3.2.1 Phase 6.16] {exc}")
-        print("[V3.2.1 Phase 6.16 Physical-split and Business-transfer Completions]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
+    elif args.command in {
+        "audit-samsung-heavy-rights-price-followups-v321",
+        "audit-asset-transfer-completion-reports-v321",
+        "audit-physical-split-business-transfer-completions-v321",
+    }:
+        from src.cli.completion_followup_commands import run_completion_followup_command
+
+        run_completion_followup_command(settings, args)
     elif args.command == "audit-amorepacific-attachment-followups-v321":
         try:
             result=audit_amorepacific_attachment_followups_v321(actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,phase595_audit_csv=args.phase595_audit_csv,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
