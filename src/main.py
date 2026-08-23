@@ -8,10 +8,6 @@ from pathlib import Path
 import time
 from zoneinfo import ZoneInfo
 
-from config.settings import get_settings
-from database.database import connect
-
-
 def load_prices(conn, code: str) -> pd.DataFrame:
     import pandas as pd
 
@@ -253,16 +249,26 @@ def execute_daily_shadow(conn, settings, args) -> None:
         raise
 
 
-def run_command(args) -> None:
+def run_command(args, *, settings_loader=None, connector=None) -> None:
     from src.cli.command_dispatcher import (
         command_requirements,
         dispatch_command,
     )
 
     requirements = command_requirements(args.command)
-    settings = get_settings() if requirements.settings else None
+    settings = None
+    if requirements.settings:
+        if settings_loader is None:
+            from config.settings import get_settings
+
+            settings_loader = get_settings
+        settings = settings_loader()
+    if requirements.database and connector is None:
+        from database.database import connect
+
+        connector = connect
     connection_scope = (
-        closing(connect(settings.db_path))
+        closing(connector(settings.db_path))
         if requirements.database
         else nullcontext(None)
     )

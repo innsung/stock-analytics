@@ -19,7 +19,8 @@ class FakeConnection:
 def test_importing_main_does_not_load_heavy_runtime_modules():
     script = (
         "import sys; import src.main; "
-        "blocked={'pandas','requests','src.kis.client','src.shadow.engine','src.collector.collectors'}; "
+        "blocked={'pandas','requests','config.settings','database.database',"
+        "'src.kis.client','src.shadow.engine','src.collector.collectors'}; "
         "print(','.join(sorted(blocked.intersection(sys.modules))))"
     )
     result = subprocess.run(
@@ -35,8 +36,6 @@ def test_importing_main_does_not_load_heavy_runtime_modules():
 @pytest.mark.parametrize("failure", (None, RuntimeError("command failed")))
 def test_run_command_always_closes_database_connection(monkeypatch, failure):
     connection = FakeConnection()
-    monkeypatch.setattr(app_main, "get_settings", lambda: SimpleNamespace(db_path="test.db"))
-    monkeypatch.setattr(app_main, "connect", lambda _path: connection)
 
     def dispatch(*args, **kwargs):
         if failure:
@@ -46,24 +45,22 @@ def test_run_command_always_closes_database_connection(monkeypatch, failure):
 
     if failure:
         with pytest.raises(RuntimeError, match="command failed"):
-            app_main.run_command(SimpleNamespace(command="backtest"))
+            app_main.run_command(
+                SimpleNamespace(command="backtest"),
+                settings_loader=lambda: SimpleNamespace(db_path="test.db"),
+                connector=lambda _path: connection,
+            )
     else:
-        app_main.run_command(SimpleNamespace(command="backtest"))
+        app_main.run_command(
+            SimpleNamespace(command="backtest"),
+            settings_loader=lambda: SimpleNamespace(db_path="test.db"),
+            connector=lambda _path: connection,
+        )
 
     assert connection.closed
 
 
 def test_run_command_skips_database_for_connectionless_command(monkeypatch):
-    monkeypatch.setattr(
-        app_main,
-        "get_settings",
-        lambda: pytest.fail("settings-free command loaded settings"),
-    )
-    monkeypatch.setattr(
-        app_main,
-        "connect",
-        lambda _path: pytest.fail("connectionless command opened the database"),
-    )
     received = {}
 
     def dispatch(conn, *args, **kwargs):
@@ -71,19 +68,17 @@ def test_run_command_skips_database_for_connectionless_command(monkeypatch):
 
     monkeypatch.setattr(command_dispatcher, "dispatch_command", dispatch)
 
-    app_main.run_command(SimpleNamespace(command="build-final-release-bundle-v321"))
+    app_main.run_command(
+        SimpleNamespace(command="build-final-release-bundle-v321"),
+        settings_loader=lambda: pytest.fail("settings-free command loaded settings"),
+        connector=lambda _path: pytest.fail("connectionless command opened the database"),
+    )
 
     assert received["conn"] is None
 
 
 def test_run_command_loads_settings_without_database_when_required(monkeypatch):
     settings = SimpleNamespace(db_path="test.db")
-    monkeypatch.setattr(app_main, "get_settings", lambda: settings)
-    monkeypatch.setattr(
-        app_main,
-        "connect",
-        lambda _path: pytest.fail("settings-only command opened the database"),
-    )
     received = {}
 
     def dispatch(conn, dispatched_settings, *args, **kwargs):
@@ -91,6 +86,10 @@ def test_run_command_loads_settings_without_database_when_required(monkeypatch):
 
     monkeypatch.setattr(command_dispatcher, "dispatch_command", dispatch)
 
-    app_main.run_command(SimpleNamespace(command="audit-kakao-zero-ratio-merger-v321"))
+    app_main.run_command(
+        SimpleNamespace(command="audit-kakao-zero-ratio-merger-v321"),
+        settings_loader=lambda: settings,
+        connector=lambda _path: pytest.fail("settings-only command opened the database"),
+    )
 
     assert received == {"conn": None, "settings": settings}
