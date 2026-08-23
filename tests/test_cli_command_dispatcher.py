@@ -3,9 +3,11 @@ from src.cli.command_dispatcher import (
     AUDIT_RUNNER_SPECS,
     ALL_COMMAND_INDEX,
     COMMAND_GROUPS,
+    FOUNDATION_RUNNER_SPECS,
     PROCESSING_COMMAND_GROUPS,
     PROCESSING_RUNNER_SPECS,
     TERMINAL_COMMAND_GROUPS,
+    TERMINAL_RUNNER_SPECS,
     WORKFLOW_COMMAND_GROUPS,
     WORKFLOW_RUNNER_SPECS,
     audit_command_group,
@@ -103,3 +105,13 @@ def test_data_driven_runner_specs_cover_every_non_terminal_group():
 
     specs = (*AUDIT_RUNNER_SPECS.values(), *WORKFLOW_RUNNER_SPECS.values(), *PROCESSING_RUNNER_SPECS.values())
     assert all(invocation in {"args", "settings"} for _, _, invocation in specs)
+
+
+def test_foundation_and_terminal_runner_specs_cover_every_group():
+    assert set(FOUNDATION_RUNNER_SPECS) == set(COMMAND_GROUPS)
+    assert set(TERMINAL_RUNNER_SPECS) == set(TERMINAL_COMMAND_GROUPS)
+
+    foundation_modes = {invocation for _, _, invocation in FOUNDATION_RUNNER_SPECS.values()}
+    terminal_modes = {invocation for _, _, invocation in TERMINAL_RUNNER_SPECS.values()}
+    assert foundation_modes <= {"runtime", "event", "conn_settings"}
+    assert terminal_modes <= {"args", "conn_settings", "collection", "portfolio", "conn_args"}

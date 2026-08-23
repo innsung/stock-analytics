@@ -142,6 +142,13 @@ AUDIT_RUNNER_SPECS = {
     "final_company_audit": ("src.cli.final_company_audit_commands", "run_final_company_audit_command", "settings"),
 }
 
+FOUNDATION_RUNNER_SPECS = {
+    "runtime": ("src.cli.runtime_commands", "run_runtime_command", "runtime"),
+    "data_operation": ("src.cli.data_operation_commands", "run_data_operation_command", "conn_settings"),
+    "event": ("src.cli.event_commands", "run_event_command", "event"),
+    "dividend": ("src.cli.dividend_commands", "run_dividend_command", "conn_settings"),
+}
+
 WORKFLOW_RUNNER_SPECS = {
     "release": ("src.cli.release_commands", "run_release_command", "args"),
     "adjustment_applicability": ("src.cli.adjustment_applicability_commands", "run_adjustment_applicability_command", "args"),
@@ -164,12 +171,24 @@ PROCESSING_RUNNER_SPECS = {
     "dividend_backlog": ("src.cli.dividend_backlog_commands", "run_dividend_backlog_command", "settings"),
 }
 
+TERMINAL_RUNNER_SPECS = {
+    "kodex": ("src.cli.kodex_commands", "run_kodex_command", "args"),
+    "ml_diagnostic": ("src.cli.ml_diagnostic_commands", "run_ml_diagnostic_command", "conn_settings"),
+    "collection": ("src.cli.collection_commands", "run_collection_command", "collection"),
+    "portfolio": ("src.cli.portfolio_commands", "run_portfolio_command", "portfolio"),
+    "core": ("src.cli.core_commands", "run_core_command", "conn_args"),
+}
+
+
+def _load_runner(spec):
+    module_name, runner_name, invocation = spec
+    return getattr(import_module(module_name), runner_name), invocation
+
 
 def _dispatch_from_spec(group, specs, settings, args) -> bool:
     if group is None:
         return False
-    module_name, runner_name, invocation = specs[group]
-    runner = getattr(import_module(module_name), runner_name)
+    runner, invocation = _load_runner(specs[group])
     if invocation == "settings":
         runner(settings, args)
     else:
@@ -208,27 +227,18 @@ def dispatch_foundation_command(
     load_universe,
 ) -> bool:
     group = command_group(args.command)
-    if group == "runtime":
-        from src.cli.runtime_commands import run_runtime_command
-
-        run_runtime_command(
+    if group is None:
+        return False
+    runner, invocation = _load_runner(FOUNDATION_RUNNER_SPECS[group])
+    if invocation == "runtime":
+        runner(
             conn, settings, args, resolve_codes=resolve_codes,
             print_shadow_report=print_shadow_report, execute_daily_shadow=execute_daily_shadow,
         )
-    elif group == "data_operation":
-        from src.cli.data_operation_commands import run_data_operation_command
-
-        run_data_operation_command(conn, settings, args)
-    elif group == "event":
-        from src.cli.event_commands import run_event_command
-
-        run_event_command(conn, settings, args, load_universe=load_universe)
-    elif group == "dividend":
-        from src.cli.dividend_commands import run_dividend_command
-
-        run_dividend_command(conn, settings, args)
+    elif invocation == "event":
+        runner(conn, settings, args, load_universe=load_universe)
     else:
-        return False
+        runner(conn, settings, args)
     return True
 
 
@@ -253,23 +263,19 @@ def dispatch_terminal_command(
     print_shadow_result,
 ) -> None:
     group = terminal_command_group(args.command)
-    if group == "kodex":
-        from src.cli.kodex_commands import run_kodex_command
-        run_kodex_command(args)
-    elif group == "ml_diagnostic":
-        from src.cli.ml_diagnostic_commands import run_ml_diagnostic_command
-        run_ml_diagnostic_command(conn, settings, args)
-    elif group == "collection":
-        from src.cli.collection_commands import run_collection_command
-        run_collection_command(conn, settings, args, resolve_codes=resolve_codes)
-    elif group == "portfolio":
-        from src.cli.portfolio_commands import run_portfolio_command
-        run_portfolio_command(
+    if group is None:
+        raise ValueError(f"Unsupported command: {args.command}")
+    runner, invocation = _load_runner(TERMINAL_RUNNER_SPECS[group])
+    if invocation == "args":
+        runner(args)
+    elif invocation == "conn_settings":
+        runner(conn, settings, args)
+    elif invocation == "collection":
+        runner(conn, settings, args, resolve_codes=resolve_codes)
+    elif invocation == "portfolio":
+        runner(
             conn, settings, args, resolve_codes=resolve_codes,
             save_shadow_outputs=save_shadow_outputs, print_shadow_result=print_shadow_result,
         )
-    elif group == "core":
-        from src.cli.core_commands import run_core_command
-        run_core_command(conn, args)
     else:
-        raise ValueError(f"Unsupported command: {args.command}")
+        runner(conn, args)
