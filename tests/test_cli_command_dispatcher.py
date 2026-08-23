@@ -1,9 +1,11 @@
 from src.cli.command_dispatcher import (
     AUDIT_COMMAND_GROUPS,
     COMMAND_GROUPS,
+    PROCESSING_COMMAND_GROUPS,
     WORKFLOW_COMMAND_GROUPS,
     audit_command_group,
     command_group,
+    processing_command_group,
     workflow_command_group,
 )
 
@@ -44,3 +46,15 @@ def test_workflow_dispatch_registry_has_unique_commands_and_routes_groups():
     assert workflow_command_group("build-historical-legal-event-chain-v321") == "historical_chain"
     assert workflow_command_group("parse-kind-dividends-v321") == "kind"
     assert workflow_command_group("unknown-command") is None
+
+
+def test_processing_dispatch_registry_has_unique_commands_and_routes_groups():
+    commands = [command for group in PROCESSING_COMMAND_GROUPS.values() for command in group]
+
+    assert len(commands) == 47
+    assert len(commands) == len(set(commands))
+    assert processing_command_group("prioritize-resolution-gaps-v321") == "resolution_planning"
+    assert processing_command_group("review-complex-corporate-actions-v321") == "corporate_action_document"
+    assert processing_command_group("build-residual-dividend-backlog-v321") == "historical_kind"
+    assert processing_command_group("route-historical-backlog-v321") == "dividend_backlog"
+    assert processing_command_group("unknown-command") is None

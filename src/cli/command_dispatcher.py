@@ -73,6 +73,20 @@ WORKFLOW_COMMAND_GROUPS = {
     }),
 }
 
+PROCESSING_COMMAND_GROUPS = {
+    "resolution_planning": frozenset({"prioritize-resolution-gaps-v321", "build-recent-dividend-acquisition-manifest-v321", "recover-acquisition-company-names-v321"}),
+    "kind_followup": frozenset({"discover-kind-market-notices-batch-v321", "acquire-paired-kind-dividend-decisions-v321", "build-paired-kind-market-observations-v321", "acquire-direct-kind-dividend-decisions-v321", "extract-kind-aggregate-market-targets-v321"}),
+    "coverage_classification": frozenset({"audit-market-notice-coverage-v321", "classify-recent-corporate-actions-v321"}),
+    "corporate_action_document": frozenset({"build-corporate-action-candidate-manifest-v321", "select-market-adjustment-candidates-v321", "acquire-missing-corporate-action-documents-v321", "parse-corporate-action-documents-v321", "review-complex-corporate-actions-v321"}),
+    "spinoff": frozenset({"audit-listed-spinoff-valuation-v321", "build-spinoff-distribution-ledger-v321", "audit-spinoff-fractional-settlement-v321", "audit-spinoff-evidence-completeness-v321", "build-complex-action-coverage-gate-v321"}),
+    "subsidiary_action": frozenset({"prioritize-current-resolution-backlog-v321", "acquire-subsidiary-action-documents-v321", "parse-subsidiary-action-applicability-v321", "integrate-not-applicable-evidence-v321", "resolve-residual-subsidiary-actions-v321", "integrate-residual-subsidiary-evidence-v321"}),
+    "direct_action": frozenset({"build-direct-action-document-inventory-v321", "review-direct-action-groups-v321", "integrate-direct-action-evidence-v321", "verify-samsung-sdi-rights-v321", "integrate-strict-event-evidence-v321", "route-actionable-resolution-backlog-v321"}),
+    "historical_dividend": frozenset({"build-recent-dividend-evidence-inventory-v321", "acquire-historical-dividend-decisions-v321", "parse-historical-dividend-decisions-v321", "build-historical-dividend-exdate-candidates-v321"}),
+    "historical_kind": frozenset({"discover-historical-kind-exdates-v321", "build-historical-kind-strict-evidence-v321", "integrate-historical-dividend-evidence-v321", "build-residual-dividend-backlog-v321"}),
+    "dividend_resolution": frozenset({"resolve-ambiguous-kind-notice-v321", "resolve-broadened-kind-notices-v321", "recover-pre-exdate-dividend-evidence-v321", "resolve-explicit-no-dividend-v321"}),
+    "dividend_backlog": frozenset({"defer-non-pit-dividends-v321", "resolve-recent-followups-v321", "route-historical-backlog-v321"}),
+}
+
 
 def command_group(command: str) -> str | None:
     return next((group for group, commands in COMMAND_GROUPS.items() if command in commands), None)
@@ -84,6 +98,10 @@ def audit_command_group(command: str) -> str | None:
 
 def workflow_command_group(command: str) -> str | None:
     return next((group for group, commands in WORKFLOW_COMMAND_GROUPS.items() if command in commands), None)
+
+
+def processing_command_group(command: str) -> str | None:
+    return next((group for group, commands in PROCESSING_COMMAND_GROUPS.items() if command in commands), None)
 
 
 def dispatch_foundation_command(
@@ -175,6 +193,36 @@ def dispatch_workflow_command(settings, args) -> bool:
     elif group == "kind":
         from src.cli.kind_commands import run_kind_command
         run_kind_command(args)
+    else:
+        return False
+    return True
+
+
+def dispatch_processing_command(settings, args) -> bool:
+    group = processing_command_group(args.command)
+    if group in {"resolution_planning", "kind_followup", "coverage_classification", "spinoff", "dividend_resolution"}:
+        module_and_runner = {
+            "resolution_planning": ("src.cli.resolution_planning_commands", "run_resolution_planning_command"),
+            "kind_followup": ("src.cli.kind_followup_commands", "run_kind_followup_command"),
+            "coverage_classification": ("src.cli.coverage_classification_commands", "run_coverage_classification_command"),
+            "spinoff": ("src.cli.spinoff_commands", "run_spinoff_command"),
+            "dividend_resolution": ("src.cli.dividend_resolution_commands", "run_dividend_resolution_command"),
+        }
+        module_name, runner_name = module_and_runner[group]
+        from importlib import import_module
+        getattr(import_module(module_name), runner_name)(args)
+    elif group:
+        module_and_runner = {
+            "corporate_action_document": ("src.cli.corporate_action_document_commands", "run_corporate_action_document_command"),
+            "subsidiary_action": ("src.cli.subsidiary_action_commands", "run_subsidiary_action_command"),
+            "direct_action": ("src.cli.direct_action_commands", "run_direct_action_command"),
+            "historical_dividend": ("src.cli.historical_dividend_commands", "run_historical_dividend_command"),
+            "historical_kind": ("src.cli.historical_kind_commands", "run_historical_kind_command"),
+            "dividend_backlog": ("src.cli.dividend_backlog_commands", "run_dividend_backlog_command"),
+        }
+        module_name, runner_name = module_and_runner[group]
+        from importlib import import_module
+        getattr(import_module(module_name), runner_name)(settings, args)
     else:
         return False
     return True

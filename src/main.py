@@ -332,7 +332,7 @@ def main() -> None:
     settings = get_settings()
     conn = connect(settings.db_path)
     atexit.register(conn.close)
-    from src.cli.command_dispatcher import dispatch_audit_command, dispatch_foundation_command, dispatch_workflow_command
+    from src.cli.command_dispatcher import dispatch_audit_command, dispatch_foundation_command, dispatch_processing_command, dispatch_workflow_command
 
     if dispatch_foundation_command(
         conn,
@@ -347,6 +347,8 @@ def main() -> None:
     elif dispatch_audit_command(settings, args):
         pass
     elif dispatch_workflow_command(settings, args):
+        pass
+    elif dispatch_processing_command(settings, args):
         pass
     elif args.command in {
         "prioritize-resolution-gaps-v321",
