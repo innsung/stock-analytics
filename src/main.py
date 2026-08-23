@@ -20,8 +20,6 @@ from src.ml.result_bundle_v321 import create_result_bundle_v321
 from src.ml.persistent_data_v321 import assert_persistent_data_v321
 from src.ml.market_effective_date_v321 import PykrxMarketAdjustmentProvider
 from src.ml.phase516_kind_crosscheck_v321 import discover_kodex_next_hops_v321
-from src.ml.phase542_market_notice_coverage_audit_v321 import audit_market_notice_coverage_v321
-from src.ml.phase543_recent_corporate_action_classifier_v321 import classify_recent_corporate_actions_v321
 from src.shadow.engine import run_shadow_day
 
 
@@ -1542,37 +1540,13 @@ def main() -> None:
         from src.cli.kind_followup_commands import run_kind_followup_command
 
         run_kind_followup_command(args)
-    elif args.command == "audit-market-notice-coverage-v321":
-        try:
-            result = audit_market_notice_coverage_v321(
-                acquisition_manifest_csv=args.acquisition_manifest_csv,
-                strict_evidence_csv=args.strict_evidence_csv,
-                discovery_csvs=args.discovery_csv,
-                output_csv=args.output_csv,
-                summary_json=args.summary_json,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.42] {exc}")
-        print("[V3.2.1 Phase 5.42 Market Notice Coverage Audit]")
-        print(f"Targets: {result['target_rows']:,}")
-        print(f"Coverage: {result['coverage_counts']}")
-        print(f"Output: {result['output_csv']}")
-        print(f"Summary: {result['summary_json']}")
-    elif args.command == "classify-recent-corporate-actions-v321":
-        try:
-            result = classify_recent_corporate_actions_v321(
-                priority_queue_csv=args.priority_queue_csv,
-                output_csv=args.output_csv,
-                summary_json=args.summary_json,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.43] {exc}")
-        print("[V3.2.1 Phase 5.43 Recent Corporate Action Classifier]")
-        print(f"Input rows: {result['input_rows']:,}")
-        print(f"Priority counts: {result['priority_counts']}")
-        print(f"Direct issuer actions: {result['direct_issuer_action_rows']:,}")
-        print(f"Output: {result['output_csv']}")
-        print(f"Summary: {result['summary_json']}")
+    elif args.command in {
+        "audit-market-notice-coverage-v321",
+        "classify-recent-corporate-actions-v321",
+    }:
+        from src.cli.coverage_classification_commands import run_coverage_classification_command
+
+        run_coverage_classification_command(args)
     elif args.command in {
         "build-corporate-action-candidate-manifest-v321",
         "select-market-adjustment-candidates-v321",
