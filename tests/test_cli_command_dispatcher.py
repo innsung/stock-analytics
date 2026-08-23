@@ -6,6 +6,7 @@ from src.cli.command_dispatcher import (
     FOUNDATION_RUNNER_SPECS,
     PROCESSING_COMMAND_GROUPS,
     PROCESSING_RUNNER_SPECS,
+    RunnerSpec,
     TERMINAL_COMMAND_GROUPS,
     TERMINAL_RUNNER_SPECS,
     WORKFLOW_COMMAND_GROUPS,
@@ -115,3 +116,18 @@ def test_foundation_and_terminal_runner_specs_cover_every_group():
     terminal_modes = {invocation for _, _, invocation in TERMINAL_RUNNER_SPECS.values()}
     assert foundation_modes <= {"runtime", "event", "conn_settings"}
     assert terminal_modes <= {"args", "conn_settings", "collection", "portfolio", "conn_args"}
+
+
+def test_all_runner_specs_are_typed_and_complete():
+    registries = (
+        FOUNDATION_RUNNER_SPECS,
+        AUDIT_RUNNER_SPECS,
+        WORKFLOW_RUNNER_SPECS,
+        PROCESSING_RUNNER_SPECS,
+        TERMINAL_RUNNER_SPECS,
+    )
+    specs = [spec for registry in registries for spec in registry.values()]
+
+    assert all(isinstance(spec, RunnerSpec) for spec in specs)
+    assert all(spec.module_name.startswith("src.cli.") for spec in specs)
+    assert all(spec.runner_name.startswith("run_") for spec in specs)

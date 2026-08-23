@@ -1,6 +1,40 @@
 from __future__ import annotations
 
 from importlib import import_module
+from typing import Literal, NamedTuple
+
+
+Invocation = Literal[
+    "args",
+    "settings",
+    "runtime",
+    "event",
+    "conn_settings",
+    "collection",
+    "portfolio",
+    "conn_args",
+]
+
+
+class RunnerSpec(NamedTuple):
+    module_name: str
+    runner_name: str
+    invocation: Invocation
+
+
+VALID_INVOCATIONS = frozenset(Invocation.__args__)
+
+
+def _validate_runner_specs(raw_specs, registry_name: str):
+    specs = {}
+    for group, raw_spec in raw_specs.items():
+        spec = RunnerSpec(*raw_spec)
+        if not spec.module_name or not spec.runner_name:
+            raise ValueError(f"Incomplete runner spec in {registry_name}: {group}")
+        if spec.invocation not in VALID_INVOCATIONS:
+            raise ValueError(f"Unsupported invocation in {registry_name}: {group}={spec.invocation}")
+        specs[group] = spec
+    return specs
 
 
 COMMAND_GROUPS = {
@@ -179,10 +213,15 @@ TERMINAL_RUNNER_SPECS = {
     "core": ("src.cli.core_commands", "run_core_command", "conn_args"),
 }
 
+FOUNDATION_RUNNER_SPECS = _validate_runner_specs(FOUNDATION_RUNNER_SPECS, "foundation")
+AUDIT_RUNNER_SPECS = _validate_runner_specs(AUDIT_RUNNER_SPECS, "audit")
+WORKFLOW_RUNNER_SPECS = _validate_runner_specs(WORKFLOW_RUNNER_SPECS, "workflow")
+PROCESSING_RUNNER_SPECS = _validate_runner_specs(PROCESSING_RUNNER_SPECS, "processing")
+TERMINAL_RUNNER_SPECS = _validate_runner_specs(TERMINAL_RUNNER_SPECS, "terminal")
+
 
 def _load_runner(spec):
-    module_name, runner_name, invocation = spec
-    return getattr(import_module(module_name), runner_name), invocation
+    return getattr(import_module(spec.module_name), spec.runner_name), spec.invocation
 
 
 def _dispatch_from_spec(group, specs, settings, args) -> bool:
