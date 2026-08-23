@@ -1,4 +1,11 @@
-from src.cli.command_dispatcher import AUDIT_COMMAND_GROUPS, COMMAND_GROUPS, audit_command_group, command_group
+from src.cli.command_dispatcher import (
+    AUDIT_COMMAND_GROUPS,
+    COMMAND_GROUPS,
+    WORKFLOW_COMMAND_GROUPS,
+    audit_command_group,
+    command_group,
+    workflow_command_group,
+)
 
 
 def test_foundation_dispatch_registry_has_unique_commands():
@@ -25,3 +32,15 @@ def test_audit_dispatch_registry_has_unique_commands_and_routes_groups():
     assert audit_command_group("audit-kakao-zero-ratio-merger-v321") == "merger_followup"
     assert audit_command_group("audit-shinhan-neoplux-share-exchange-v321") == "final_company_audit"
     assert audit_command_group("unknown-command") is None
+
+
+def test_workflow_dispatch_registry_has_unique_commands_and_routes_groups():
+    commands = [command for group in WORKFLOW_COMMAND_GROUPS.values() for command in group]
+
+    assert len(commands) == 30
+    assert len(commands) == len(set(commands))
+    assert workflow_command_group("build-final-release-bundle-v321") == "release"
+    assert workflow_command_group("extract-primary-adjustment-document-terms-v321") == "primary_adjustment"
+    assert workflow_command_group("build-historical-legal-event-chain-v321") == "historical_chain"
+    assert workflow_command_group("parse-kind-dividends-v321") == "kind"
+    assert workflow_command_group("unknown-command") is None

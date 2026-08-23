@@ -47,6 +47,32 @@ AUDIT_COMMAND_GROUPS = {
     "final_company_audit": frozenset({"verify-ecoprobm-bonus-issue-v321", "audit-hd-ksoe-third-party-capital-v321", "audit-shinhan-neoplux-share-exchange-v321"}),
 }
 
+WORKFLOW_COMMAND_GROUPS = {
+    "release": frozenset({
+        "build-release-quality-gate-v321", "verify-release-artifact-integrity-v321", "verify-release-restore-drill-v321",
+        "build-runtime-readiness-gate-v321", "build-release-candidate-seal-v321", "build-rc-promotion-readiness-v321",
+        "build-release-approval-handoff-v321", "build-release-notes-v321", "build-repository-promotion-preflight-v321",
+        "build-release-curation-manifest-v321", "build-manual-curation-resolution-v321", "build-curated-release-payload-v321",
+        "verify-curated-payload-restore-v321", "build-final-promotion-gate-v321", "build-final-release-bundle-v321",
+    }),
+    "adjustment_applicability": frozenset({
+        "audit-historical-merger-spinoff-applicability-v321", "reparse-celltrion-merger-v321",
+        "audit-historical-capital-reductions-v321", "audit-incomplete-primary-adjustments-v321",
+    }),
+    "primary_adjustment": frozenset({
+        "validate-primary-adjustment-market-dates-v321", "audit-historical-rights-applicability-v321",
+        "extract-primary-adjustment-document-terms-v321",
+    }),
+    "historical_chain": frozenset({
+        "consolidate-historical-legal-chains-v321", "validate-historical-chain-documents-v321",
+        "quarantine-periodic-dividend-aggregates-v321", "build-historical-legal-event-chain-v321",
+    }),
+    "kind": frozenset({
+        "parse-kind-dividends-v321", "reconcile-kind-dividends-v321",
+        "acquire-kind-market-exdates-v321", "discover-kind-market-exdates-v321",
+    }),
+}
+
 
 def command_group(command: str) -> str | None:
     return next((group for group, commands in COMMAND_GROUPS.items() if command in commands), None)
@@ -54,6 +80,10 @@ def command_group(command: str) -> str | None:
 
 def audit_command_group(command: str) -> str | None:
     return next((group for group, commands in AUDIT_COMMAND_GROUPS.items() if command in commands), None)
+
+
+def workflow_command_group(command: str) -> str | None:
+    return next((group for group, commands in WORKFLOW_COMMAND_GROUPS.items() if command in commands), None)
 
 
 def dispatch_foundation_command(
@@ -123,6 +153,28 @@ def dispatch_audit_command(settings, args) -> bool:
     elif group == "final_company_audit":
         from src.cli.final_company_audit_commands import run_final_company_audit_command
         run_final_company_audit_command(settings, args)
+    else:
+        return False
+    return True
+
+
+def dispatch_workflow_command(settings, args) -> bool:
+    group = workflow_command_group(args.command)
+    if group == "release":
+        from src.cli.release_commands import run_release_command
+        run_release_command(args)
+    elif group == "adjustment_applicability":
+        from src.cli.adjustment_applicability_commands import run_adjustment_applicability_command
+        run_adjustment_applicability_command(args)
+    elif group == "primary_adjustment":
+        from src.cli.primary_adjustment_commands import run_primary_adjustment_command
+        run_primary_adjustment_command(settings, args)
+    elif group == "historical_chain":
+        from src.cli.historical_chain_commands import run_historical_chain_command
+        run_historical_chain_command(settings, args)
+    elif group == "kind":
+        from src.cli.kind_commands import run_kind_command
+        run_kind_command(args)
     else:
         return False
     return True

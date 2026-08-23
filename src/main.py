@@ -332,7 +332,7 @@ def main() -> None:
     settings = get_settings()
     conn = connect(settings.db_path)
     atexit.register(conn.close)
-    from src.cli.command_dispatcher import dispatch_audit_command, dispatch_foundation_command
+    from src.cli.command_dispatcher import dispatch_audit_command, dispatch_foundation_command, dispatch_workflow_command
 
     if dispatch_foundation_command(
         conn,
@@ -345,6 +345,8 @@ def main() -> None:
     ):
         pass
     elif dispatch_audit_command(settings, args):
+        pass
+    elif dispatch_workflow_command(settings, args):
         pass
     elif args.command == "validate-primary-adjustment-market-dates-v321":
         from src.cli.primary_adjustment_commands import run_primary_adjustment_command
