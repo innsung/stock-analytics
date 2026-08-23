@@ -24,6 +24,14 @@ class RunnerSpec(NamedTuple):
     invocation: Invocation
 
 
+class CommandRequirements(NamedTuple):
+    registry: str
+    group: str
+    invocation: Invocation
+    settings: bool
+    database: bool
+
+
 VALID_INVOCATIONS = frozenset(Invocation.__args__)
 REGISTRY_INVOCATIONS = MappingProxyType({
     "foundation": frozenset({"runtime", "event", "conn_settings"}),
@@ -291,26 +299,23 @@ def command_route(command: str) -> tuple[str, str] | None:
 
 
 def command_requires_database(command: str) -> bool:
-    route = command_route(command)
-    if route is None:
-        raise ValueError(f"Unsupported command: {command}")
-
-    registry, group = route
-    if registry == "foundation":
-        return True
-    if registry == "terminal":
-        return TERMINAL_RUNNER_SPECS[group].invocation != "args"
-    return False
+    return command_requirements(command).database
 
 
 def command_requires_settings(command: str) -> bool:
+    return command_requirements(command).settings
+
+
+def command_requirements(command: str) -> CommandRequirements:
     route = command_route(command)
     if route is None:
         raise ValueError(f"Unsupported command: {command}")
 
     registry, group = route
     invocation = RUNNER_SPECS_BY_REGISTRY[registry][group].invocation
-    return command_requires_database(command) or invocation == "settings"
+    database = registry == "foundation" or (registry == "terminal" and invocation != "args")
+    settings = database or invocation == "settings"
+    return CommandRequirements(registry, group, invocation, settings, database)
 
 
 def dispatch_foundation_command(

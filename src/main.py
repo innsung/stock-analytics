@@ -255,15 +255,15 @@ def execute_daily_shadow(conn, settings, args) -> None:
 
 def run_command(args) -> None:
     from src.cli.command_dispatcher import (
-        command_requires_database,
-        command_requires_settings,
+        command_requirements,
         dispatch_command,
     )
 
-    settings = get_settings() if command_requires_settings(args.command) else None
+    requirements = command_requirements(args.command)
+    settings = get_settings() if requirements.settings else None
     connection_scope = (
         closing(connect(settings.db_path))
-        if command_requires_database(args.command)
+        if requirements.database
         else nullcontext(None)
     )
     with connection_scope as conn:

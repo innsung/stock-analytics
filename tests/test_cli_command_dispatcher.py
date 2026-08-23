@@ -12,6 +12,7 @@ from src.cli.command_dispatcher import (
     PROCESSING_COMMAND_GROUPS,
     PROCESSING_RUNNER_SPECS,
     REGISTRY_INVOCATIONS,
+    CommandRequirements,
     RunnerSpec,
     TERMINAL_COMMAND_GROUPS,
     TERMINAL_RUNNER_SPECS,
@@ -23,6 +24,7 @@ from src.cli.command_dispatcher import (
     command_group,
     command_requires_database,
     command_requires_settings,
+    command_requirements,
     command_route,
     processing_command_group,
     terminal_command_group,
@@ -135,6 +137,18 @@ def test_settings_requirement_is_derived_from_runner_invocation():
 
     with pytest.raises(ValueError, match="Unsupported command"):
         command_requires_settings("unknown-command")
+
+
+def test_command_requirements_describe_execution_resources_in_one_lookup():
+    assert command_requirements("daily-shadow") == CommandRequirements(
+        "foundation", "runtime", "runtime", True, True
+    )
+    assert command_requirements("build-final-release-bundle-v321") == CommandRequirements(
+        "workflow", "release", "args", False, False
+    )
+    assert command_requirements("audit-kakao-zero-ratio-merger-v321") == CommandRequirements(
+        "audit", "merger_followup", "settings", True, False
+    )
 
 
 def test_data_driven_runner_specs_cover_every_non_terminal_group():
