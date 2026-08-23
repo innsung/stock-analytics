@@ -25,9 +25,6 @@ from src.ml.phase532_recent_dividend_acquisition_manifest_v321 import build_rece
 from src.ml.phase536_company_name_recovery_v321 import recover_acquisition_company_names_v321
 from src.ml.phase542_market_notice_coverage_audit_v321 import audit_market_notice_coverage_v321
 from src.ml.phase543_recent_corporate_action_classifier_v321 import classify_recent_corporate_actions_v321
-from src.ml.phase587_primary_adjustment_document_terms_v321 import extract_primary_adjustment_document_terms_v321
-from src.ml.phase588_primary_adjustment_market_validation_v321 import validate_primary_adjustment_market_dates_v321
-from src.ml.phase589_rights_applicability_audit_v321 import audit_historical_rights_applicability_v321
 from src.ml.phase590_merger_spinoff_applicability_v321 import audit_historical_merger_spinoff_applicability_v321
 from src.ml.phase591_celltrion_merger_reparse_v321 import reparse_celltrion_merger_v321
 from src.ml.phase592_capital_reduction_applicability_v321 import audit_historical_capital_reductions_v321
@@ -1423,20 +1420,9 @@ def main() -> None:
 
         run_kind_command(args)
     elif args.command == "validate-primary-adjustment-market-dates-v321":
-        try:
-            result=validate_primary_adjustment_market_dates_v321(
-                PykrxMarketAdjustmentProvider(),terms_csv=args.terms_csv,
-                execution_manifest_csv=args.execution_manifest_csv,trading_calendar_db=args.trading_calendar_db,
-                evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,
-                summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.88] {exc}")
-        print("[V3.2.1 Phase 5.88 Primary Adjustment Market Validation]")
-        print(f"Candidates: {result['extracted_candidate_rows']:,}")
-        print(f"PIT-valid: {result['pit_valid_rows']:,}")
-        print(f"Safe market candidates: {result['safe_market_factor_candidates']:,}")
-        print(f"Strict market evidence: {result['strict_market_evidence_rows']:,}")
-        print(f"Output: {result['evidence_output_csv']}")
+        from src.cli.primary_adjustment_commands import run_primary_adjustment_command
+
+        run_primary_adjustment_command(settings, args)
     elif args.command == "verify-samsung-heavy-rights-v321":
         try:
             settings=get_settings()
@@ -1725,40 +1711,17 @@ def main() -> None:
         print(f"Material or reparse: {result['material_or_reparse_rows']:,}")
         print(f"Output: {result['evidence_output_csv']}")
     elif args.command == "audit-historical-rights-applicability-v321":
-        try:
-            result=audit_historical_rights_applicability_v321(
-                terms_csv=args.terms_csv,execution_manifest_csv=args.execution_manifest_csv,
-                documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,
-                audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.89] {exc}")
-        print("[V3.2.1 Phase 5.89 Rights Applicability Audit]")
-        print(f"Targets: {result['target_rows']:,}")
-        print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}")
-        print(f"Shareholder-rights TERP candidates: {result['shareholder_rights_terp_candidates']:,}")
-        print(f"Unresolved allotment methods: {result['unresolved_allotment_rows']:,}")
-        print(f"Output: {result['evidence_output_csv']}")
+        from src.cli.primary_adjustment_commands import run_primary_adjustment_command
+
+        run_primary_adjustment_command(settings, args)
     elif args.command == "consolidate-historical-legal-chains-v321":
         from src.cli.historical_chain_commands import run_historical_chain_command
 
         run_historical_chain_command(settings, args)
     elif args.command == "extract-primary-adjustment-document-terms-v321":
-        try:
-            settings=get_settings()
-            result=extract_primary_adjustment_document_terms_v321(
-                DartClient(settings.dart_api_key),execution_manifest_csv=args.execution_manifest_csv,
-                disclosures_csv=args.disclosures_csv,legal_groups_csv=args.legal_groups_csv,
-                documents_dir=args.documents_dir,output_csv=args.output_csv,
-                review_queue_csv=args.review_queue_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.87] {exc}")
-        print("[V3.2.1 Phase 5.87 Primary Adjustment Document Terms]")
-        print(f"Targets: {result['target_rows']:,}")
-        print(f"Selected receipts: {result['selected_receipt_rows']:,}")
-        print(f"Unique documents: {result['unique_documents_processed']:,}")
-        print(f"Terms extracted: {result['terms_extracted_rows']:,}")
-        print(f"Review rows: {result['review_rows']:,}")
-        print(f"Output: {result['output_csv']}")
+        from src.cli.primary_adjustment_commands import run_primary_adjustment_command
+
+        run_primary_adjustment_command(settings, args)
     elif args.command in {
         "validate-historical-chain-documents-v321",
         "quarantine-periodic-dividend-aggregates-v321",
