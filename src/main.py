@@ -20,9 +20,6 @@ from src.ml.result_bundle_v321 import create_result_bundle_v321
 from src.ml.persistent_data_v321 import assert_persistent_data_v321
 from src.ml.market_effective_date_v321 import PykrxMarketAdjustmentProvider
 from src.ml.phase516_kind_crosscheck_v321 import discover_kodex_next_hops_v321
-from src.ml.phase531_resolution_gap_prioritizer_v321 import prioritize_resolution_gaps_v321
-from src.ml.phase532_recent_dividend_acquisition_manifest_v321 import build_recent_dividend_acquisition_manifest_v321
-from src.ml.phase536_company_name_recovery_v321 import recover_acquisition_company_names_v321
 from src.ml.phase542_market_notice_coverage_audit_v321 import audit_market_notice_coverage_v321
 from src.ml.phase543_recent_corporate_action_classifier_v321 import classify_recent_corporate_actions_v321
 from src.shadow.engine import run_shadow_day
@@ -1522,37 +1519,14 @@ def main() -> None:
         from src.cli.kind_commands import run_kind_command
 
         run_kind_command(args)
-    elif args.command == "prioritize-resolution-gaps-v321":
-        try:
-            result = prioritize_resolution_gaps_v321(
-                resolved_verification_csv=args.resolved_verification_csv,
-                output_csv=args.output_csv,
-                summary_json=args.summary_json,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.31] {exc}")
-        print("[V3.2.1 Phase 5.31 Resolution Gap Prioritizer]")
-        print(f"Unresolved: {result['unresolved_rows']:,}")
-        print(f"Priority counts: {result['priority_counts']}")
-        print(f"Next target: {result['next_target']}")
-        print(f"Output: {result['output_csv']}")
-        print(f"Summary: {result['summary_json']}")
-    elif args.command == "build-recent-dividend-acquisition-manifest-v321":
-        try:
-            result = build_recent_dividend_acquisition_manifest_v321(
-                priority_queue_csv=args.priority_queue_csv,
-                decision_disclosures_csv=args.decision_disclosures_csv,
-                strict_evidence_csv=args.strict_evidence_csv,
-                output_csv=args.output_csv,
-                summary_json=args.summary_json,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.32] {exc}")
-        print("[V3.2.1 Phase 5.32 Recent Dividend Acquisition Manifest]")
-        print(f"Targets: {result['target_rows']:,}")
-        print(f"Status counts: {result['status_counts']}")
-        print(f"Output: {result['output_csv']}")
-        print(f"Summary: {result['summary_json']}")
+    elif args.command in {
+        "prioritize-resolution-gaps-v321",
+        "build-recent-dividend-acquisition-manifest-v321",
+        "recover-acquisition-company-names-v321",
+    }:
+        from src.cli.resolution_planning_commands import run_resolution_planning_command
+
+        run_resolution_planning_command(args)
     elif args.command in {
         "discover-kind-market-notices-batch-v321",
         "acquire-paired-kind-dividend-decisions-v321",
@@ -1561,22 +1535,6 @@ def main() -> None:
         from src.cli.kind_followup_commands import run_kind_followup_command
 
         run_kind_followup_command(args)
-    elif args.command == "recover-acquisition-company-names-v321":
-        try:
-            result = recover_acquisition_company_names_v321(
-                acquisition_manifest_csv=args.acquisition_manifest_csv,
-                dividend_facts_csv=args.dividend_facts_csv,
-                output_csv=args.output_csv,
-                audit_csv=args.audit_csv,
-            )
-        except (FileNotFoundError, ValueError) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.36] {exc}")
-        print("[V3.2.1 Phase 5.36 Company Name Recovery]")
-        print(f"Input rows: {result['input_rows']:,}")
-        print(f"Recovered names: {result['recovered_names']:,}")
-        print(f"Remaining missing: {result['remaining_missing']:,}")
-        print(f"Output: {result['output_csv']}")
-        print(f"Audit: {result['audit_csv']}")
     elif args.command in {
         "acquire-direct-kind-dividend-decisions-v321",
         "extract-kind-aggregate-market-targets-v321",
