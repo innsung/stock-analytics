@@ -1,4 +1,3 @@
-import argparse
 import atexit
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -248,12 +247,9 @@ def execute_daily_shadow(conn, settings, args) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="KIS + DART 분석·백테스트 MVP")
-    sub = parser.add_subparsers(dest="command", required=True)
-    from src.cli.parser_registry import register_all_parsers
+    from src.cli.parser_registry import build_parser
 
-    register_all_parsers(sub)
-    args = parser.parse_args()
+    args = build_parser().parse_args()
     settings = get_settings()
     conn = connect(settings.db_path)
     atexit.register(conn.close)

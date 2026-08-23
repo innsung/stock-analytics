@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 from functools import lru_cache
 from importlib import import_module
 from typing import Callable, NamedTuple
@@ -54,3 +55,10 @@ def load_parser_registrar(spec: ParserSpec) -> Callable:
 def register_all_parsers(subparsers) -> None:
     for spec in PARSER_SPECS:
         load_parser_registrar(spec)(subparsers)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="KIS + DART 분석·백테스트 MVP")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    register_all_parsers(subparsers)
+    return parser
