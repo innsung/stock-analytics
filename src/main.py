@@ -1,4 +1,4 @@
-from contextlib import closing, contextmanager
+from contextlib import closing, contextmanager, nullcontext
 from datetime import datetime, timezone
 import hashlib
 import os
@@ -247,9 +247,14 @@ def execute_daily_shadow(conn, settings, args) -> None:
 
 def run_command(args) -> None:
     settings = get_settings()
-    from src.cli.command_dispatcher import dispatch_command
+    from src.cli.command_dispatcher import command_requires_database, dispatch_command
 
-    with closing(connect(settings.db_path)) as conn:
+    connection_scope = (
+        closing(connect(settings.db_path))
+        if command_requires_database(args.command)
+        else nullcontext(None)
+    )
+    with connection_scope as conn:
         dispatch_command(
             conn,
             settings,

@@ -283,6 +283,19 @@ def command_route(command: str) -> tuple[str, str] | None:
     return ALL_COMMAND_INDEX.get(command)
 
 
+def command_requires_database(command: str) -> bool:
+    route = command_route(command)
+    if route is None:
+        raise ValueError(f"Unsupported command: {command}")
+
+    registry, group = route
+    if registry == "foundation":
+        return True
+    if registry == "terminal":
+        return TERMINAL_RUNNER_SPECS[group].invocation != "args"
+    return False
+
+
 def dispatch_foundation_command(
     conn,
     settings,

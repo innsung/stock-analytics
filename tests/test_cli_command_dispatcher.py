@@ -21,6 +21,7 @@ from src.cli.command_dispatcher import (
     _validate_runner_specs,
     audit_command_group,
     command_group,
+    command_requires_database,
     command_route,
     processing_command_group,
     terminal_command_group,
@@ -109,6 +110,18 @@ def test_all_dispatch_registries_are_globally_unique_and_complete():
     assert command_route("build-total-return-v321") == ("foundation", "event")
     assert command_route("backtest") == ("terminal", "core")
     assert command_route("unknown-command") is None
+
+
+def test_database_requirement_is_derived_from_command_route():
+    assert command_requires_database("daily-shadow")
+    assert command_requires_database("ml-diagnose-v321")
+    assert command_requires_database("backtest")
+    assert not command_requires_database("build-final-release-bundle-v321")
+    assert not command_requires_database("audit-kakao-zero-ratio-merger-v321")
+    assert not command_requires_database("phase516-selfcheck")
+
+    with pytest.raises(ValueError, match="Unsupported command"):
+        command_requires_database("unknown-command")
 
 
 def test_data_driven_runner_specs_cover_every_non_terminal_group():

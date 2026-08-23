@@ -33,3 +33,22 @@ def test_run_command_always_closes_database_connection(monkeypatch, failure):
         app_main.run_command(SimpleNamespace(command="backtest"))
 
     assert connection.closed
+
+
+def test_run_command_skips_database_for_connectionless_command(monkeypatch):
+    monkeypatch.setattr(app_main, "get_settings", lambda: SimpleNamespace(db_path="test.db"))
+    monkeypatch.setattr(
+        app_main,
+        "connect",
+        lambda _path: pytest.fail("connectionless command opened the database"),
+    )
+    received = {}
+
+    def dispatch(conn, *args, **kwargs):
+        received["conn"] = conn
+
+    monkeypatch.setattr(command_dispatcher, "dispatch_command", dispatch)
+
+    app_main.run_command(SimpleNamespace(command="build-final-release-bundle-v321"))
+
+    assert received["conn"] is None
