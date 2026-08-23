@@ -87,6 +87,14 @@ PROCESSING_COMMAND_GROUPS = {
     "dividend_backlog": frozenset({"defer-non-pit-dividends-v321", "resolve-recent-followups-v321", "route-historical-backlog-v321"}),
 }
 
+TERMINAL_COMMAND_GROUPS = {
+    "kodex": frozenset({"discover-kodex-next-hops-v321", "phase516-selfcheck"}),
+    "ml_diagnostic": frozenset({"ml-diagnose-v321"}),
+    "collection": frozenset({"collect-price", "collect-financial", "collect-multi", "collect-valuation", "collect-financial-series"}),
+    "portfolio": frozenset({"rank-universe", "shadow-run", "portfolio-verify", "external-verify", "common-verify"}),
+    "core": frozenset({"analyze", "backtest", "walk-forward", "robustness"}),
+}
+
 
 def command_group(command: str) -> str | None:
     return next((group for group, commands in COMMAND_GROUPS.items() if command in commands), None)
@@ -102,6 +110,10 @@ def workflow_command_group(command: str) -> str | None:
 
 def processing_command_group(command: str) -> str | None:
     return next((group for group, commands in PROCESSING_COMMAND_GROUPS.items() if command in commands), None)
+
+
+def terminal_command_group(command: str) -> str | None:
+    return next((group for group, commands in TERMINAL_COMMAND_GROUPS.items() if command in commands), None)
 
 
 def dispatch_foundation_command(
@@ -226,3 +238,35 @@ def dispatch_processing_command(settings, args) -> bool:
     else:
         return False
     return True
+
+
+def dispatch_terminal_command(
+    conn,
+    settings,
+    args,
+    *,
+    resolve_codes,
+    save_shadow_outputs,
+    print_shadow_result,
+) -> None:
+    group = terminal_command_group(args.command)
+    if group == "kodex":
+        from src.cli.kodex_commands import run_kodex_command
+        run_kodex_command(args)
+    elif group == "ml_diagnostic":
+        from src.cli.ml_diagnostic_commands import run_ml_diagnostic_command
+        run_ml_diagnostic_command(conn, settings, args)
+    elif group == "collection":
+        from src.cli.collection_commands import run_collection_command
+        run_collection_command(conn, settings, args, resolve_codes=resolve_codes)
+    elif group == "portfolio":
+        from src.cli.portfolio_commands import run_portfolio_command
+        run_portfolio_command(
+            conn, settings, args, resolve_codes=resolve_codes,
+            save_shadow_outputs=save_shadow_outputs, print_shadow_result=print_shadow_result,
+        )
+    elif group == "core":
+        from src.cli.core_commands import run_core_command
+        run_core_command(conn, args)
+    else:
+        raise ValueError(f"Unsupported command: {args.command}")

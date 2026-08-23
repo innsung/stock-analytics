@@ -2,10 +2,12 @@ from src.cli.command_dispatcher import (
     AUDIT_COMMAND_GROUPS,
     COMMAND_GROUPS,
     PROCESSING_COMMAND_GROUPS,
+    TERMINAL_COMMAND_GROUPS,
     WORKFLOW_COMMAND_GROUPS,
     audit_command_group,
     command_group,
     processing_command_group,
+    terminal_command_group,
     workflow_command_group,
 )
 
@@ -58,3 +60,16 @@ def test_processing_dispatch_registry_has_unique_commands_and_routes_groups():
     assert processing_command_group("build-residual-dividend-backlog-v321") == "historical_kind"
     assert processing_command_group("route-historical-backlog-v321") == "dividend_backlog"
     assert processing_command_group("unknown-command") is None
+
+
+def test_terminal_dispatch_registry_has_unique_commands_and_routes_groups():
+    commands = [command for group in TERMINAL_COMMAND_GROUPS.values() for command in group]
+
+    assert len(commands) == 17
+    assert len(commands) == len(set(commands))
+    assert terminal_command_group("phase516-selfcheck") == "kodex"
+    assert terminal_command_group("ml-diagnose-v321") == "ml_diagnostic"
+    assert terminal_command_group("collect-price") == "collection"
+    assert terminal_command_group("shadow-run") == "portfolio"
+    assert terminal_command_group("backtest") == "core"
+    assert terminal_command_group("unknown-command") is None

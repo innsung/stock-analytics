@@ -332,7 +332,13 @@ def main() -> None:
     settings = get_settings()
     conn = connect(settings.db_path)
     atexit.register(conn.close)
-    from src.cli.command_dispatcher import dispatch_audit_command, dispatch_foundation_command, dispatch_processing_command, dispatch_workflow_command
+    from src.cli.command_dispatcher import (
+        dispatch_audit_command,
+        dispatch_foundation_command,
+        dispatch_processing_command,
+        dispatch_terminal_command,
+        dispatch_workflow_command,
+    )
 
     if dispatch_foundation_command(
         conn,
@@ -350,39 +356,8 @@ def main() -> None:
         pass
     elif dispatch_processing_command(settings, args):
         pass
-    elif args.command in {"discover-kodex-next-hops-v321", "phase516-selfcheck"}:
-        from src.cli.kodex_commands import run_kodex_command
-
-        run_kodex_command(args)
-    elif args.command == "ml-diagnose-v321":
-        from src.cli.ml_diagnostic_commands import run_ml_diagnostic_command
-
-        run_ml_diagnostic_command(conn, settings, args)
-    elif args.command in {
-        "collect-price",
-        "collect-financial",
-        "collect-multi",
-        "collect-valuation",
-        "collect-financial-series",
-    }:
-        from src.cli.collection_commands import run_collection_command
-
-        run_collection_command(
-            conn,
-            settings,
-            args,
-            resolve_codes=resolve_codes_and_industries,
-        )
-    elif args.command in {
-        "rank-universe",
-        "shadow-run",
-        "portfolio-verify",
-        "external-verify",
-        "common-verify",
-    }:
-        from src.cli.portfolio_commands import run_portfolio_command
-
-        run_portfolio_command(
+    else:
+        dispatch_terminal_command(
             conn,
             settings,
             args,
@@ -390,10 +365,6 @@ def main() -> None:
             save_shadow_outputs=save_shadow_outputs,
             print_shadow_result=print_shadow_result,
         )
-    else:
-        from src.cli.core_commands import run_core_command
-
-        run_core_command(conn, args)
 
 if __name__ == "__main__":
     main()
