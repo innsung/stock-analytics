@@ -250,84 +250,9 @@ def execute_daily_shadow(conn, settings, args) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="KIS + DART 분석·백테스트 MVP")
     sub = parser.add_subparsers(dest="command", required=True)
-    from src.cli.core_parsers import register_core_parsers
+    from src.cli.parser_registry import register_all_parsers
 
-    register_core_parsers(sub)
-    from src.cli.portfolio_parsers import register_portfolio_parsers
-
-    register_portfolio_parsers(sub)
-    from src.cli.shadow_parsers import register_shadow_parsers
-
-    register_shadow_parsers(sub)
-    from src.cli.ml_parsers import register_ml_parsers
-
-    register_ml_parsers(sub)
-    from src.cli.data_operation_parsers import register_data_operation_parsers
-
-    register_data_operation_parsers(sub)
-    from src.cli.event_reconciliation_parsers import register_event_reconciliation_parsers
-
-    register_event_reconciliation_parsers(sub)
-    from src.cli.official_event_parsers import register_official_event_parsers
-
-    register_official_event_parsers(sub)
-    from src.cli.cash_distribution_parsers import register_cash_distribution_parsers
-
-    register_cash_distribution_parsers(sub)
-    from src.cli.kodex_distribution_parsers import register_kodex_distribution_parsers
-
-    register_kodex_distribution_parsers(sub)
-    from src.cli.stock_dividend_evidence_parsers import register_stock_dividend_evidence_parsers
-
-    register_stock_dividend_evidence_parsers(sub)
-    from src.cli.kind_parsers import register_kind_parsers
-
-    register_kind_parsers(sub)
-    from src.cli.corporate_action_parsers import register_corporate_action_parsers
-
-    register_corporate_action_parsers(sub)
-    from src.cli.spinoff_parsers import register_spinoff_parsers
-
-    register_spinoff_parsers(sub)
-    from src.cli.subsidiary_action_parsers import register_subsidiary_action_parsers
-
-    register_subsidiary_action_parsers(sub)
-    from src.cli.direct_action_parsers import register_direct_action_parsers
-
-    register_direct_action_parsers(sub)
-    from src.cli.historical_dividend_parsers import register_historical_dividend_parsers
-
-    register_historical_dividend_parsers(sub)
-    from src.cli.historical_kind_parsers import register_historical_kind_parsers
-
-    register_historical_kind_parsers(sub)
-    from src.cli.dividend_resolution_parsers import register_dividend_resolution_parsers
-
-    register_dividend_resolution_parsers(sub)
-    from src.cli.dividend_backlog_parsers import register_dividend_backlog_parsers
-
-    register_dividend_backlog_parsers(sub)
-    from src.cli.historical_chain_parsers import register_historical_chain_parsers
-
-    register_historical_chain_parsers(sub)
-    from src.cli.primary_adjustment_parsers import register_primary_adjustment_parsers
-
-    register_primary_adjustment_parsers(sub)
-    from src.cli.adjustment_applicability_parsers import register_adjustment_applicability_parsers
-
-    register_adjustment_applicability_parsers(sub)
-    from src.cli.company_audit_parsers import register_company_audit_parsers
-
-    register_company_audit_parsers(sub)
-    from src.cli.release_parsers import register_release_parsers
-
-    register_release_parsers(sub)
-    from src.cli.kind_followup_parsers import register_kind_followup_parsers
-
-    register_kind_followup_parsers(sub)
-    from src.cli.diagnostic_parsers import register_diagnostic_parsers
-
-    register_diagnostic_parsers(sub)
+    register_all_parsers(sub)
     args = parser.parse_args()
     settings = get_settings()
     conn = connect(settings.db_path)
