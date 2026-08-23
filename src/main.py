@@ -25,9 +25,6 @@ from src.ml.phase532_recent_dividend_acquisition_manifest_v321 import build_rece
 from src.ml.phase536_company_name_recovery_v321 import recover_acquisition_company_names_v321
 from src.ml.phase542_market_notice_coverage_audit_v321 import audit_market_notice_coverage_v321
 from src.ml.phase543_recent_corporate_action_classifier_v321 import classify_recent_corporate_actions_v321
-from src.ml.phase617_amorepacific_attachment_followups_v321 import audit_amorepacific_attachment_followups_v321
-from src.ml.phase618_rights_offering_followups_v321 import audit_rights_offering_followups_v321
-from src.ml.phase619_hdhyundai_subsidiary_rights_amendments_v321 import audit_hdhyundai_subsidiary_rights_amendments_v321
 from src.ml.phase620_kakao_split_amendments_v321 import audit_kakao_split_amendments_v321
 from src.ml.phase621_historical_amendment_duplicates_v321 import audit_historical_amendment_duplicates_v321
 from src.ml.phase622_ecoprobm_rights_support_disclosures_v321 import audit_ecoprobm_rights_support_disclosures_v321
@@ -1449,21 +1446,14 @@ def main() -> None:
         from src.cli.completion_followup_commands import run_completion_followup_command
 
         run_completion_followup_command(settings, args)
-    elif args.command == "audit-amorepacific-attachment-followups-v321":
-        try:
-            result=audit_amorepacific_attachment_followups_v321(actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,phase595_audit_csv=args.phase595_audit_csv,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError) as exc:raise SystemExit(f"[V3.2.1 Phase 6.17] {exc}")
-        print("[V3.2.1 Phase 6.17 Amorepacific Attachment Follow-ups]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-rights-offering-followups-v321":
-        try:
-            result=audit_rights_offering_followups_v321(actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError) as exc:raise SystemExit(f"[V3.2.1 Phase 6.18] {exc}")
-        print("[V3.2.1 Phase 6.18 Rights-offering Follow-ups]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-hdhyundai-subsidiary-rights-amendments-v321":
-        try:
-            result=audit_hdhyundai_subsidiary_rights_amendments_v321(actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError) as exc:raise SystemExit(f"[V3.2.1 Phase 6.19] {exc}")
-        print("[V3.2.1 Phase 6.19 HD Hyundai Subsidiary Rights Amendments]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
+    elif args.command in {
+        "audit-amorepacific-attachment-followups-v321",
+        "audit-rights-offering-followups-v321",
+        "audit-hdhyundai-subsidiary-rights-amendments-v321",
+    }:
+        from src.cli.amendment_followup_commands import run_amendment_followup_command
+
+        run_amendment_followup_command(args)
     elif args.command == "audit-kakao-split-amendments-v321":
         try:
             result=audit_kakao_split_amendments_v321(actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,phase590_audit_csv=args.phase590_audit_csv,phase616_audit_csv=args.phase616_audit_csv,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
