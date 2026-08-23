@@ -1,3 +1,5 @@
+import pytest
+
 from src.cli.command_dispatcher import (
     AUDIT_COMMAND_GROUPS,
     AUDIT_RUNNER_SPECS,
@@ -131,3 +133,16 @@ def test_all_runner_specs_are_typed_and_complete():
     assert all(isinstance(spec, RunnerSpec) for spec in specs)
     assert all(spec.module_name.startswith("src.cli.") for spec in specs)
     assert all(spec.runner_name.startswith("run_") for spec in specs)
+
+
+def test_dispatch_indexes_and_runner_specs_are_read_only():
+    with pytest.raises(TypeError):
+        COMMAND_GROUPS["unexpected"] = frozenset({"unexpected-command"})
+
+    with pytest.raises(TypeError):
+        ALL_COMMAND_INDEX["unexpected-command"] = ("terminal", "core")
+
+    with pytest.raises(TypeError):
+        TERMINAL_RUNNER_SPECS["core"] = RunnerSpec(
+            "src.cli.core_commands", "run_core_command", "conn_args"
+        )

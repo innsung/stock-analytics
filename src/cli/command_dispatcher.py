@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from importlib import import_module
-from typing import Literal, NamedTuple
+from types import MappingProxyType
+from typing import Literal, Mapping, NamedTuple
 
 
 Invocation = Literal[
@@ -25,7 +26,10 @@ class RunnerSpec(NamedTuple):
 VALID_INVOCATIONS = frozenset(Invocation.__args__)
 
 
-def _validate_runner_specs(raw_specs, registry_name: str):
+def _validate_runner_specs(
+    raw_specs: Mapping[str, tuple[str, str, Invocation]],
+    registry_name: str,
+) -> Mapping[str, RunnerSpec]:
     specs = {}
     for group, raw_spec in raw_specs.items():
         spec = RunnerSpec(*raw_spec)
@@ -34,7 +38,7 @@ def _validate_runner_specs(raw_specs, registry_name: str):
         if spec.invocation not in VALID_INVOCATIONS:
             raise ValueError(f"Unsupported invocation in {registry_name}: {group}={spec.invocation}")
         specs[group] = spec
-    return specs
+    return MappingProxyType(specs)
 
 
 COMMAND_GROUPS = {
@@ -131,6 +135,12 @@ TERMINAL_COMMAND_GROUPS = {
     "core": frozenset({"analyze", "backtest", "walk-forward", "robustness"}),
 }
 
+COMMAND_GROUPS = MappingProxyType(COMMAND_GROUPS)
+AUDIT_COMMAND_GROUPS = MappingProxyType(AUDIT_COMMAND_GROUPS)
+WORKFLOW_COMMAND_GROUPS = MappingProxyType(WORKFLOW_COMMAND_GROUPS)
+PROCESSING_COMMAND_GROUPS = MappingProxyType(PROCESSING_COMMAND_GROUPS)
+TERMINAL_COMMAND_GROUPS = MappingProxyType(TERMINAL_COMMAND_GROUPS)
+
 
 def _build_command_index(groups, registry_name: str):
     index = {}
@@ -139,7 +149,7 @@ def _build_command_index(groups, registry_name: str):
             if command in index:
                 raise ValueError(f"Duplicate command in {registry_name}: {command}")
             index[command] = group
-    return index
+    return MappingProxyType(index)
 
 
 COMMAND_INDEX = _build_command_index(COMMAND_GROUPS, "foundation")
@@ -148,7 +158,7 @@ WORKFLOW_COMMAND_INDEX = _build_command_index(WORKFLOW_COMMAND_GROUPS, "workflow
 PROCESSING_COMMAND_INDEX = _build_command_index(PROCESSING_COMMAND_GROUPS, "processing")
 TERMINAL_COMMAND_INDEX = _build_command_index(TERMINAL_COMMAND_GROUPS, "terminal")
 
-ALL_COMMAND_INDEX = {}
+_all_command_index = {}
 for registry_name, index in (
     ("foundation", COMMAND_INDEX),
     ("audit", AUDIT_COMMAND_INDEX),
@@ -157,10 +167,11 @@ for registry_name, index in (
     ("terminal", TERMINAL_COMMAND_INDEX),
 ):
     for command, group in index.items():
-        if command in ALL_COMMAND_INDEX:
-            previous_registry, _ = ALL_COMMAND_INDEX[command]
+        if command in _all_command_index:
+            previous_registry, _ = _all_command_index[command]
             raise ValueError(f"Command registered in both {previous_registry} and {registry_name}: {command}")
-        ALL_COMMAND_INDEX[command] = (registry_name, group)
+        _all_command_index[command] = (registry_name, group)
+ALL_COMMAND_INDEX = MappingProxyType(_all_command_index)
 
 
 AUDIT_RUNNER_SPECS = {
