@@ -96,24 +96,55 @@ TERMINAL_COMMAND_GROUPS = {
 }
 
 
+def _build_command_index(groups, registry_name: str):
+    index = {}
+    for group, commands in groups.items():
+        for command in commands:
+            if command in index:
+                raise ValueError(f"Duplicate command in {registry_name}: {command}")
+            index[command] = group
+    return index
+
+
+COMMAND_INDEX = _build_command_index(COMMAND_GROUPS, "foundation")
+AUDIT_COMMAND_INDEX = _build_command_index(AUDIT_COMMAND_GROUPS, "audit")
+WORKFLOW_COMMAND_INDEX = _build_command_index(WORKFLOW_COMMAND_GROUPS, "workflow")
+PROCESSING_COMMAND_INDEX = _build_command_index(PROCESSING_COMMAND_GROUPS, "processing")
+TERMINAL_COMMAND_INDEX = _build_command_index(TERMINAL_COMMAND_GROUPS, "terminal")
+
+ALL_COMMAND_INDEX = {}
+for registry_name, index in (
+    ("foundation", COMMAND_INDEX),
+    ("audit", AUDIT_COMMAND_INDEX),
+    ("workflow", WORKFLOW_COMMAND_INDEX),
+    ("processing", PROCESSING_COMMAND_INDEX),
+    ("terminal", TERMINAL_COMMAND_INDEX),
+):
+    for command, group in index.items():
+        if command in ALL_COMMAND_INDEX:
+            previous_registry, _ = ALL_COMMAND_INDEX[command]
+            raise ValueError(f"Command registered in both {previous_registry} and {registry_name}: {command}")
+        ALL_COMMAND_INDEX[command] = (registry_name, group)
+
+
 def command_group(command: str) -> str | None:
-    return next((group for group, commands in COMMAND_GROUPS.items() if command in commands), None)
+    return COMMAND_INDEX.get(command)
 
 
 def audit_command_group(command: str) -> str | None:
-    return next((group for group, commands in AUDIT_COMMAND_GROUPS.items() if command in commands), None)
+    return AUDIT_COMMAND_INDEX.get(command)
 
 
 def workflow_command_group(command: str) -> str | None:
-    return next((group for group, commands in WORKFLOW_COMMAND_GROUPS.items() if command in commands), None)
+    return WORKFLOW_COMMAND_INDEX.get(command)
 
 
 def processing_command_group(command: str) -> str | None:
-    return next((group for group, commands in PROCESSING_COMMAND_GROUPS.items() if command in commands), None)
+    return PROCESSING_COMMAND_INDEX.get(command)
 
 
 def terminal_command_group(command: str) -> str | None:
-    return next((group for group, commands in TERMINAL_COMMAND_GROUPS.items() if command in commands), None)
+    return TERMINAL_COMMAND_INDEX.get(command)
 
 
 def dispatch_foundation_command(

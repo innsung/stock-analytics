@@ -1,5 +1,6 @@
 from src.cli.command_dispatcher import (
     AUDIT_COMMAND_GROUPS,
+    ALL_COMMAND_INDEX,
     COMMAND_GROUPS,
     PROCESSING_COMMAND_GROUPS,
     TERMINAL_COMMAND_GROUPS,
@@ -73,3 +74,20 @@ def test_terminal_dispatch_registry_has_unique_commands_and_routes_groups():
     assert terminal_command_group("shadow-run") == "portfolio"
     assert terminal_command_group("backtest") == "core"
     assert terminal_command_group("unknown-command") is None
+
+
+def test_all_dispatch_registries_are_globally_unique_and_complete():
+    registries = (
+        COMMAND_GROUPS,
+        AUDIT_COMMAND_GROUPS,
+        WORKFLOW_COMMAND_GROUPS,
+        PROCESSING_COMMAND_GROUPS,
+        TERMINAL_COMMAND_GROUPS,
+    )
+    commands = [command for registry in registries for group in registry.values() for command in group]
+
+    assert len(commands) == 179
+    assert len(ALL_COMMAND_INDEX) == 179
+    assert len(set(commands)) == 179
+    assert ALL_COMMAND_INDEX["build-total-return-v321"] == ("foundation", "event")
+    assert ALL_COMMAND_INDEX["backtest"] == ("terminal", "core")
