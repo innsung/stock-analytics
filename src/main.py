@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from contextlib import closing, contextmanager, nullcontext
 from datetime import datetime, timezone
 import hashlib
@@ -6,23 +8,19 @@ from pathlib import Path
 import time
 from zoneinfo import ZoneInfo
 
-import pandas as pd
-import requests
-
 from config.settings import get_settings
 from database.database import connect
-from src.collector.collectors import collect_prices_incremental, collect_valuation
-from src.dart.client import DartClient
-from src.kis.client import KISClient, KISRateLimitError
-from src.ml.market_effective_date_v321 import PykrxMarketAdjustmentProvider
-from src.shadow.engine import run_shadow_day
 
 
 def load_prices(conn, code: str) -> pd.DataFrame:
+    import pandas as pd
+
     return pd.read_sql_query("SELECT * FROM stock_prices WHERE code=? ORDER BY date", conn, params=(code,))
 
 
 def load_universe_csv(path: str | None) -> tuple[list[str], dict[str, str]]:
+    import pandas as pd
+
     if not path:
         return [], {}
     frame = pd.read_csv(path, dtype={"code": str})
@@ -52,6 +50,8 @@ def resolve_codes_and_industries(args) -> tuple[list[str], dict[str, str]]:
 
 
 def save_shadow_outputs(conn, result, output_prefix: str, portfolio_id: str) -> None:
+    import pandas as pd
+
     prefix = Path(output_prefix)
     result.rankings.to_csv(prefix.with_name(prefix.name + "_daily_ranking.csv"), index=False, encoding="utf-8-sig")
     result.proposals.to_csv(prefix.with_name(prefix.name + "_trade_proposals.csv"), index=False, encoding="utf-8-sig")
@@ -84,6 +84,8 @@ def print_shadow_result(result, output_prefix: str) -> None:
 
 
 def print_shadow_report(conn, portfolio_id: str, export_csv: str | None = None) -> None:
+    import pandas as pd
+
     performance = pd.read_sql_query("""SELECT * FROM shadow_book_performance
         WHERE portfolio_id=? ORDER BY performance_date""", conn, params=(portfolio_id,))
     if performance.empty:
@@ -136,6 +138,12 @@ def daily_run_lock(db_path: Path, portfolio_id: str):
 
 
 def execute_daily_shadow(conn, settings, args) -> None:
+    import pandas as pd
+
+    from src.collector.collectors import collect_prices_incremental, collect_valuation
+    from src.kis.client import KISClient, KISRateLimitError
+    from src.shadow.engine import run_shadow_day
+
     started = datetime.now(timezone.utc).isoformat()
     log_id = conn.execute("""INSERT INTO daily_run_logs(portfolio_id,started_at,status)
         VALUES(?,?,'RUNNING')""", (args.portfolio_id, started)).lastrowid

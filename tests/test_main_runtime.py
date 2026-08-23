@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -12,6 +14,22 @@ class FakeConnection:
 
     def close(self):
         self.closed = True
+
+
+def test_importing_main_does_not_load_heavy_runtime_modules():
+    script = (
+        "import sys; import src.main; "
+        "blocked={'pandas','requests','src.kis.client','src.shadow.engine','src.collector.collectors'}; "
+        "print(','.join(sorted(blocked.intersection(sys.modules))))"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.stdout.strip() == ""
 
 
 @pytest.mark.parametrize("failure", (None, RuntimeError("command failed")))
