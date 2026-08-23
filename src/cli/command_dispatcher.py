@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from importlib import import_module
+
 
 COMMAND_GROUPS = {
     "runtime": frozenset({
@@ -127,6 +129,54 @@ for registry_name, index in (
         ALL_COMMAND_INDEX[command] = (registry_name, group)
 
 
+AUDIT_RUNNER_SPECS = {
+    "kind": ("src.cli.kind_commands", "run_kind_command", "args"),
+    "company_adjustment": ("src.cli.company_adjustment_commands", "run_company_adjustment_command", "settings"),
+    "company_applicability": ("src.cli.company_applicability_commands", "run_company_applicability_command", "settings"),
+    "merger_followup": ("src.cli.merger_followup_commands", "run_merger_followup_command", "settings"),
+    "subsidiary_audit": ("src.cli.subsidiary_audit_commands", "run_subsidiary_audit_command", "settings"),
+    "market_followup_audit": ("src.cli.market_followup_audit_commands", "run_market_followup_audit_command", "settings"),
+    "completion_followup": ("src.cli.completion_followup_commands", "run_completion_followup_command", "settings"),
+    "amendment_followup": ("src.cli.amendment_followup_commands", "run_amendment_followup_command", "args"),
+    "amendment_crosscheck": ("src.cli.amendment_crosscheck_commands", "run_amendment_crosscheck_command", "args"),
+    "final_company_audit": ("src.cli.final_company_audit_commands", "run_final_company_audit_command", "settings"),
+}
+
+WORKFLOW_RUNNER_SPECS = {
+    "release": ("src.cli.release_commands", "run_release_command", "args"),
+    "adjustment_applicability": ("src.cli.adjustment_applicability_commands", "run_adjustment_applicability_command", "args"),
+    "primary_adjustment": ("src.cli.primary_adjustment_commands", "run_primary_adjustment_command", "settings"),
+    "historical_chain": ("src.cli.historical_chain_commands", "run_historical_chain_command", "settings"),
+    "kind": ("src.cli.kind_commands", "run_kind_command", "args"),
+}
+
+PROCESSING_RUNNER_SPECS = {
+    "resolution_planning": ("src.cli.resolution_planning_commands", "run_resolution_planning_command", "args"),
+    "kind_followup": ("src.cli.kind_followup_commands", "run_kind_followup_command", "args"),
+    "coverage_classification": ("src.cli.coverage_classification_commands", "run_coverage_classification_command", "args"),
+    "corporate_action_document": ("src.cli.corporate_action_document_commands", "run_corporate_action_document_command", "settings"),
+    "spinoff": ("src.cli.spinoff_commands", "run_spinoff_command", "args"),
+    "subsidiary_action": ("src.cli.subsidiary_action_commands", "run_subsidiary_action_command", "settings"),
+    "direct_action": ("src.cli.direct_action_commands", "run_direct_action_command", "settings"),
+    "historical_dividend": ("src.cli.historical_dividend_commands", "run_historical_dividend_command", "settings"),
+    "historical_kind": ("src.cli.historical_kind_commands", "run_historical_kind_command", "settings"),
+    "dividend_resolution": ("src.cli.dividend_resolution_commands", "run_dividend_resolution_command", "args"),
+    "dividend_backlog": ("src.cli.dividend_backlog_commands", "run_dividend_backlog_command", "settings"),
+}
+
+
+def _dispatch_from_spec(group, specs, settings, args) -> bool:
+    if group is None:
+        return False
+    module_name, runner_name, invocation = specs[group]
+    runner = getattr(import_module(module_name), runner_name)
+    if invocation == "settings":
+        runner(settings, args)
+    else:
+        runner(args)
+    return True
+
+
 def command_group(command: str) -> str | None:
     return COMMAND_INDEX.get(command)
 
@@ -183,93 +233,15 @@ def dispatch_foundation_command(
 
 
 def dispatch_audit_command(settings, args) -> bool:
-    group = audit_command_group(args.command)
-    if group == "kind":
-        from src.cli.kind_commands import run_kind_command
-        run_kind_command(args)
-    elif group == "company_adjustment":
-        from src.cli.company_adjustment_commands import run_company_adjustment_command
-        run_company_adjustment_command(settings, args)
-    elif group == "company_applicability":
-        from src.cli.company_applicability_commands import run_company_applicability_command
-        run_company_applicability_command(settings, args)
-    elif group == "merger_followup":
-        from src.cli.merger_followup_commands import run_merger_followup_command
-        run_merger_followup_command(settings, args)
-    elif group == "subsidiary_audit":
-        from src.cli.subsidiary_audit_commands import run_subsidiary_audit_command
-        run_subsidiary_audit_command(settings, args)
-    elif group == "market_followup_audit":
-        from src.cli.market_followup_audit_commands import run_market_followup_audit_command
-        run_market_followup_audit_command(settings, args)
-    elif group == "completion_followup":
-        from src.cli.completion_followup_commands import run_completion_followup_command
-        run_completion_followup_command(settings, args)
-    elif group == "amendment_followup":
-        from src.cli.amendment_followup_commands import run_amendment_followup_command
-        run_amendment_followup_command(args)
-    elif group == "amendment_crosscheck":
-        from src.cli.amendment_crosscheck_commands import run_amendment_crosscheck_command
-        run_amendment_crosscheck_command(args)
-    elif group == "final_company_audit":
-        from src.cli.final_company_audit_commands import run_final_company_audit_command
-        run_final_company_audit_command(settings, args)
-    else:
-        return False
-    return True
+    return _dispatch_from_spec(audit_command_group(args.command), AUDIT_RUNNER_SPECS, settings, args)
 
 
 def dispatch_workflow_command(settings, args) -> bool:
-    group = workflow_command_group(args.command)
-    if group == "release":
-        from src.cli.release_commands import run_release_command
-        run_release_command(args)
-    elif group == "adjustment_applicability":
-        from src.cli.adjustment_applicability_commands import run_adjustment_applicability_command
-        run_adjustment_applicability_command(args)
-    elif group == "primary_adjustment":
-        from src.cli.primary_adjustment_commands import run_primary_adjustment_command
-        run_primary_adjustment_command(settings, args)
-    elif group == "historical_chain":
-        from src.cli.historical_chain_commands import run_historical_chain_command
-        run_historical_chain_command(settings, args)
-    elif group == "kind":
-        from src.cli.kind_commands import run_kind_command
-        run_kind_command(args)
-    else:
-        return False
-    return True
+    return _dispatch_from_spec(workflow_command_group(args.command), WORKFLOW_RUNNER_SPECS, settings, args)
 
 
 def dispatch_processing_command(settings, args) -> bool:
-    group = processing_command_group(args.command)
-    if group in {"resolution_planning", "kind_followup", "coverage_classification", "spinoff", "dividend_resolution"}:
-        module_and_runner = {
-            "resolution_planning": ("src.cli.resolution_planning_commands", "run_resolution_planning_command"),
-            "kind_followup": ("src.cli.kind_followup_commands", "run_kind_followup_command"),
-            "coverage_classification": ("src.cli.coverage_classification_commands", "run_coverage_classification_command"),
-            "spinoff": ("src.cli.spinoff_commands", "run_spinoff_command"),
-            "dividend_resolution": ("src.cli.dividend_resolution_commands", "run_dividend_resolution_command"),
-        }
-        module_name, runner_name = module_and_runner[group]
-        from importlib import import_module
-        getattr(import_module(module_name), runner_name)(args)
-    elif group:
-        module_and_runner = {
-            "corporate_action_document": ("src.cli.corporate_action_document_commands", "run_corporate_action_document_command"),
-            "subsidiary_action": ("src.cli.subsidiary_action_commands", "run_subsidiary_action_command"),
-            "direct_action": ("src.cli.direct_action_commands", "run_direct_action_command"),
-            "historical_dividend": ("src.cli.historical_dividend_commands", "run_historical_dividend_command"),
-            "historical_kind": ("src.cli.historical_kind_commands", "run_historical_kind_command"),
-            "dividend_backlog": ("src.cli.dividend_backlog_commands", "run_dividend_backlog_command"),
-        }
-        module_name, runner_name = module_and_runner[group]
-        from importlib import import_module
-        getattr(import_module(module_name), runner_name)(settings, args)
-    else:
-        return False
-    return True
-
+    return _dispatch_from_spec(processing_command_group(args.command), PROCESSING_RUNNER_SPECS, settings, args)
 
 def dispatch_terminal_command(
     conn,

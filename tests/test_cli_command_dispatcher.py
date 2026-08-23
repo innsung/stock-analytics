@@ -1,10 +1,13 @@
 from src.cli.command_dispatcher import (
     AUDIT_COMMAND_GROUPS,
+    AUDIT_RUNNER_SPECS,
     ALL_COMMAND_INDEX,
     COMMAND_GROUPS,
     PROCESSING_COMMAND_GROUPS,
+    PROCESSING_RUNNER_SPECS,
     TERMINAL_COMMAND_GROUPS,
     WORKFLOW_COMMAND_GROUPS,
+    WORKFLOW_RUNNER_SPECS,
     audit_command_group,
     command_group,
     processing_command_group,
@@ -91,3 +94,12 @@ def test_all_dispatch_registries_are_globally_unique_and_complete():
     assert len(set(commands)) == 179
     assert ALL_COMMAND_INDEX["build-total-return-v321"] == ("foundation", "event")
     assert ALL_COMMAND_INDEX["backtest"] == ("terminal", "core")
+
+
+def test_data_driven_runner_specs_cover_every_non_terminal_group():
+    assert set(AUDIT_RUNNER_SPECS) == set(AUDIT_COMMAND_GROUPS)
+    assert set(WORKFLOW_RUNNER_SPECS) == set(WORKFLOW_COMMAND_GROUPS)
+    assert set(PROCESSING_RUNNER_SPECS) == set(PROCESSING_COMMAND_GROUPS)
+
+    specs = (*AUDIT_RUNNER_SPECS.values(), *WORKFLOW_RUNNER_SPECS.values(), *PROCESSING_RUNNER_SPECS.values())
+    assert all(invocation in {"args", "settings"} for _, _, invocation in specs)
