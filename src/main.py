@@ -25,9 +25,6 @@ from src.ml.phase532_recent_dividend_acquisition_manifest_v321 import build_rece
 from src.ml.phase536_company_name_recovery_v321 import recover_acquisition_company_names_v321
 from src.ml.phase542_market_notice_coverage_audit_v321 import audit_market_notice_coverage_v321
 from src.ml.phase543_recent_corporate_action_classifier_v321 import classify_recent_corporate_actions_v321
-from src.ml.phase597_lgchem_subsidiary_rights_v321 import audit_lgchem_subsidiary_rights_v321
-from src.ml.phase598_hdhyundai_exchangeable_bond_v321 import audit_hdhyundai_exchangeable_bond_v321
-from src.ml.phase599_ecoprobm_merger_transfer_v321 import audit_ecoprobm_merger_transfer_v321
 from src.ml.phase600_kakao_zero_ratio_merger_v321 import audit_kakao_zero_ratio_merger_v321
 from src.ml.phase601_celltrion_merger_followups_v321 import audit_celltrion_merger_followups_v321
 from src.ml.phase602_kakao_overseas_dr_delisting_v321 import audit_kakao_overseas_dr_delisting_v321
@@ -1424,42 +1421,14 @@ def main() -> None:
         from src.cli.company_adjustment_commands import run_company_adjustment_command
 
         run_company_adjustment_command(settings, args)
-    elif args.command == "audit-lgchem-subsidiary-rights-v321":
-        try:
-            settings=get_settings()
-            result=audit_lgchem_subsidiary_rights_v321(
-                DartClient(settings.dart_api_key),actionable_queue_csv=args.actionable_queue_csv,
-                disclosures_csv=args.disclosures_csv,documents_dir=args.documents_dir,
-                evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,
-                summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.97] {exc}")
-        print("[V3.2.1 Phase 5.97 LG Chem Subsidiary Rights Applicability]")
-        print(f"Targets: {result['target_rows']:,}")
-        print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}")
-        print(f"Unresolved: {result['unresolved_rows']:,}")
-        print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-hdhyundai-exchangeable-bond-v321":
-        try:
-            settings=get_settings()
-            result=audit_hdhyundai_exchangeable_bond_v321(
-                DartClient(settings.dart_api_key),PykrxMarketAdjustmentProvider(),
-                actionable_queue_csv=args.actionable_queue_csv,documents_dir=args.documents_dir,
-                evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,
-                summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:
-            raise SystemExit(f"[V3.2.1 Phase 5.98] {exc}")
-        print("[V3.2.1 Phase 5.98 HD Hyundai Exchangeable Bond Applicability]")
-        print(f"Targets: {result['target_rows']:,}")
-        print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}")
-        print(f"Unresolved: {result['unresolved_rows']:,}")
-        print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-ecoprobm-merger-transfer-v321":
-        try:
-            settings=get_settings();result=audit_ecoprobm_merger_transfer_v321(DartClient(settings.dart_api_key),PykrxMarketAdjustmentProvider(),actionable_queue_csv=args.actionable_queue_csv,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc: raise SystemExit(f"[V3.2.1 Phase 5.99] {exc}")
-        print("[V3.2.1 Phase 5.99 Ecopro BM Merger and Transfer Applicability]")
-        print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
+    elif args.command in {
+        "audit-lgchem-subsidiary-rights-v321",
+        "audit-hdhyundai-exchangeable-bond-v321",
+        "audit-ecoprobm-merger-transfer-v321",
+    }:
+        from src.cli.company_applicability_commands import run_company_applicability_command
+
+        run_company_applicability_command(settings, args)
     elif args.command == "audit-kakao-zero-ratio-merger-v321":
         try:
             settings=get_settings();result=audit_kakao_zero_ratio_merger_v321(DartClient(settings.dart_api_key),PykrxMarketAdjustmentProvider(),actionable_queue_csv=args.actionable_queue_csv,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
