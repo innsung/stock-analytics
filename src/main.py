@@ -348,68 +348,6 @@ def main() -> None:
         pass
     elif dispatch_workflow_command(settings, args):
         pass
-    elif args.command == "validate-primary-adjustment-market-dates-v321":
-        from src.cli.primary_adjustment_commands import run_primary_adjustment_command
-
-        run_primary_adjustment_command(settings, args)
-    elif args.command in {
-        "build-release-quality-gate-v321",
-        "verify-release-artifact-integrity-v321",
-        "verify-release-restore-drill-v321",
-        "build-runtime-readiness-gate-v321",
-        "build-release-candidate-seal-v321",
-        "build-rc-promotion-readiness-v321",
-        "build-release-approval-handoff-v321",
-        "build-release-notes-v321",
-        "build-repository-promotion-preflight-v321",
-        "build-release-curation-manifest-v321",
-        "build-manual-curation-resolution-v321",
-        "build-curated-release-payload-v321",
-        "verify-curated-payload-restore-v321",
-        "build-final-promotion-gate-v321",
-        "build-final-release-bundle-v321",
-    }:
-        from src.cli.release_commands import run_release_command
-
-        run_release_command(args)
-    elif args.command in {
-        "audit-historical-merger-spinoff-applicability-v321",
-        "reparse-celltrion-merger-v321",
-        "audit-historical-capital-reductions-v321",
-        "audit-incomplete-primary-adjustments-v321",
-    }:
-        from src.cli.adjustment_applicability_commands import run_adjustment_applicability_command
-
-        run_adjustment_applicability_command(args)
-    elif args.command == "audit-historical-rights-applicability-v321":
-        from src.cli.primary_adjustment_commands import run_primary_adjustment_command
-
-        run_primary_adjustment_command(settings, args)
-    elif args.command == "consolidate-historical-legal-chains-v321":
-        from src.cli.historical_chain_commands import run_historical_chain_command
-
-        run_historical_chain_command(settings, args)
-    elif args.command == "extract-primary-adjustment-document-terms-v321":
-        from src.cli.primary_adjustment_commands import run_primary_adjustment_command
-
-        run_primary_adjustment_command(settings, args)
-    elif args.command in {
-        "validate-historical-chain-documents-v321",
-        "quarantine-periodic-dividend-aggregates-v321",
-        "build-historical-legal-event-chain-v321",
-    }:
-        from src.cli.historical_chain_commands import run_historical_chain_command
-
-        run_historical_chain_command(settings, args)
-    elif args.command in {
-        "parse-kind-dividends-v321",
-        "reconcile-kind-dividends-v321",
-        "acquire-kind-market-exdates-v321",
-        "discover-kind-market-exdates-v321",
-    }:
-        from src.cli.kind_commands import run_kind_command
-
-        run_kind_command(args)
     elif args.command in {
         "prioritize-resolution-gaps-v321",
         "build-recent-dividend-acquisition-manifest-v321",
