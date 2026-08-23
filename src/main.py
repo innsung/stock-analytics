@@ -25,9 +25,6 @@ from src.ml.phase532_recent_dividend_acquisition_manifest_v321 import build_rece
 from src.ml.phase536_company_name_recovery_v321 import recover_acquisition_company_names_v321
 from src.ml.phase542_market_notice_coverage_audit_v321 import audit_market_notice_coverage_v321
 from src.ml.phase543_recent_corporate_action_classifier_v321 import classify_recent_corporate_actions_v321
-from src.ml.phase611_naver_line_overseas_delisting_v321 import audit_naver_line_overseas_delisting_v321
-from src.ml.phase612_historical_administrative_trading_halts_v321 import audit_historical_administrative_trading_halts_v321
-from src.ml.phase613_related_party_rights_participation_v321 import audit_related_party_rights_participation_v321
 from src.ml.phase614_samsung_heavy_rights_price_followups_v321 import audit_samsung_heavy_rights_price_followups_v321
 from src.ml.phase615_asset_transfer_completion_reports_v321 import audit_asset_transfer_completion_reports_v321
 from src.ml.phase616_physical_split_business_transfer_completions_v321 import audit_physical_split_business_transfer_completions_v321
@@ -1439,21 +1436,14 @@ def main() -> None:
         from src.cli.subsidiary_audit_commands import run_subsidiary_audit_command
 
         run_subsidiary_audit_command(settings, args)
-    elif args.command == "audit-naver-line-overseas-delisting-v321":
-        try:
-            settings=get_settings();result=audit_naver_line_overseas_delisting_v321(DartClient(settings.dart_api_key),PykrxMarketAdjustmentProvider(),actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:raise SystemExit(f"[V3.2.1 Phase 6.11] {exc}")
-        print("[V3.2.1 Phase 6.11 NAVER LINE Overseas Delisting]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-historical-administrative-trading-halts-v321":
-        try:
-            settings=get_settings();result=audit_historical_administrative_trading_halts_v321(DartClient(settings.dart_api_key),actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:raise SystemExit(f"[V3.2.1 Phase 6.12] {exc}")
-        print("[V3.2.1 Phase 6.12 Historical Administrative Trading Halts]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
-    elif args.command == "audit-related-party-rights-participation-v321":
-        try:
-            settings=get_settings();result=audit_related_party_rights_participation_v321(DartClient(settings.dart_api_key),actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
-        except (FileNotFoundError,ValueError,RuntimeError,requests.RequestException) as exc:raise SystemExit(f"[V3.2.1 Phase 6.13] {exc}")
-        print("[V3.2.1 Phase 6.13 Related-party Rights Participation]");print(f"Targets: {result['target_rows']:,}");print(f"NOT_APPLICABLE evidence: {result['not_applicable_evidence_rows']:,}");print(f"Unresolved: {result['unresolved_rows']:,}");print(f"Output: {result['evidence_output_csv']}")
+    elif args.command in {
+        "audit-naver-line-overseas-delisting-v321",
+        "audit-historical-administrative-trading-halts-v321",
+        "audit-related-party-rights-participation-v321",
+    }:
+        from src.cli.market_followup_audit_commands import run_market_followup_audit_command
+
+        run_market_followup_audit_command(settings, args)
     elif args.command == "audit-samsung-heavy-rights-price-followups-v321":
         try:
             settings=get_settings();result=audit_samsung_heavy_rights_price_followups_v321(DartClient(settings.dart_api_key),actionable_queue_csv=args.actionable_queue_csv,disclosures_csv=args.disclosures_csv,phase594_audit_csv=args.phase594_audit_csv,documents_dir=args.documents_dir,evidence_output_csv=args.evidence_output_csv,audit_output_csv=args.audit_output_csv,summary_json=args.summary_json)
