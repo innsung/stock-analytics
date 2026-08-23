@@ -22,6 +22,7 @@ from src.cli.command_dispatcher import (
     audit_command_group,
     command_group,
     command_requires_database,
+    command_requires_settings,
     command_route,
     processing_command_group,
     terminal_command_group,
@@ -122,6 +123,18 @@ def test_database_requirement_is_derived_from_command_route():
 
     with pytest.raises(ValueError, match="Unsupported command"):
         command_requires_database("unknown-command")
+
+
+def test_settings_requirement_is_derived_from_runner_invocation():
+    assert command_requires_settings("daily-shadow")
+    assert command_requires_settings("audit-kakao-zero-ratio-merger-v321")
+    assert command_requires_settings("backtest")
+    assert not command_requires_settings("build-final-release-bundle-v321")
+    assert not command_requires_settings("resolve-ambiguous-kind-notice-v321")
+    assert not command_requires_settings("phase516-selfcheck")
+
+    with pytest.raises(ValueError, match="Unsupported command"):
+        command_requires_settings("unknown-command")
 
 
 def test_data_driven_runner_specs_cover_every_non_terminal_group():

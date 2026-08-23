@@ -246,9 +246,13 @@ def execute_daily_shadow(conn, settings, args) -> None:
 
 
 def run_command(args) -> None:
-    settings = get_settings()
-    from src.cli.command_dispatcher import command_requires_database, dispatch_command
+    from src.cli.command_dispatcher import (
+        command_requires_database,
+        command_requires_settings,
+        dispatch_command,
+    )
 
+    settings = get_settings() if command_requires_settings(args.command) else None
     connection_scope = (
         closing(connect(settings.db_path))
         if command_requires_database(args.command)

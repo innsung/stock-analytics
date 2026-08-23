@@ -241,6 +241,13 @@ AUDIT_RUNNER_SPECS = _validate_runner_specs(AUDIT_RUNNER_SPECS, "audit")
 WORKFLOW_RUNNER_SPECS = _validate_runner_specs(WORKFLOW_RUNNER_SPECS, "workflow")
 PROCESSING_RUNNER_SPECS = _validate_runner_specs(PROCESSING_RUNNER_SPECS, "processing")
 TERMINAL_RUNNER_SPECS = _validate_runner_specs(TERMINAL_RUNNER_SPECS, "terminal")
+RUNNER_SPECS_BY_REGISTRY = MappingProxyType({
+    "foundation": FOUNDATION_RUNNER_SPECS,
+    "audit": AUDIT_RUNNER_SPECS,
+    "workflow": WORKFLOW_RUNNER_SPECS,
+    "processing": PROCESSING_RUNNER_SPECS,
+    "terminal": TERMINAL_RUNNER_SPECS,
+})
 
 
 @lru_cache(maxsize=None)
@@ -294,6 +301,16 @@ def command_requires_database(command: str) -> bool:
     if registry == "terminal":
         return TERMINAL_RUNNER_SPECS[group].invocation != "args"
     return False
+
+
+def command_requires_settings(command: str) -> bool:
+    route = command_route(command)
+    if route is None:
+        raise ValueError(f"Unsupported command: {command}")
+
+    registry, group = route
+    invocation = RUNNER_SPECS_BY_REGISTRY[registry][group].invocation
+    return command_requires_database(command) or invocation == "settings"
 
 
 def dispatch_foundation_command(
